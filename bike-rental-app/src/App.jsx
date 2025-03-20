@@ -1,23 +1,23 @@
 import { useState, useEffect } from 'react'
-import { Container, Box, Paper, Tabs, Tab, AppBar, Toolbar, Typography, Button } from '@mui/material'
+import { Container, Box, Tabs, Tab, AppBar, Toolbar, Typography, Button } from '@mui/material'
 import BikeMap from './components/Map/BikeMap'
 import LoginForm from './components/Auth/LoginFrom'
 import ReservationList from './components/Bikes/ReservationList'
 import RideHistory from './components/Bikes/RideHistory'
-import ActiveRides from './components/Bikes/ActiveRides'  
+import ActiveRides from './components/Bikes/ActiveRides'
 import './App.css'
 import { supabase } from './services/supabase'
-import { ThemeProvider, createTheme } from '@mui/material/styles';
+import { ThemeProvider, createTheme } from '@mui/material/styles'
 
 const theme = createTheme({
   palette: {
     primary: {
-      main: '#2E7D32', // Verde más suave
+      main: '#2E7D32',
       light: '#4CAF50',
       dark: '#1B5E20',
     },
     secondary: {
-      main: '#FF5722', // Naranja para contraste
+      main: '#FF5722',
     },
     background: {
       default: '#F5F5F5',
@@ -68,81 +68,89 @@ function App() {
     await supabase.auth.signOut()
   }
 
-  
   if (!session) {
     return (
-      <Container maxWidth="sm" sx={{ mt: 8 }}>
-        <Paper elevation={3} sx={{ p: 4, borderRadius: 2 }}>
-          <Typography variant="h4" component="h1" gutterBottom align="center">
-            Bike Rental
-          </Typography>
-          <Typography variant="subtitle1" gutterBottom align="center" sx={{ mb: 4 }}>
-            Inicia sesión para continuar
-          </Typography>
-          <LoginForm />
-        </Paper>
-      </Container>
+      <ThemeProvider theme={theme}>
+        <Box sx={{ 
+          minHeight: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          bgcolor: '#2E7D32',
+          backgroundImage: 'linear-gradient(135deg, #2E7D32 0%, #1B5E20 100%)',
+        }}>
+          <Container maxWidth="sm">
+            <LoginForm />
+          </Container>
+        </Box>
+      </ThemeProvider>
     )
   }
 
   return (
     <ThemeProvider theme={theme}>
-    <Box sx={{ 
-      display: 'flex', 
-      flexDirection: 'column', 
-      minHeight: '100vh' 
-    }}>
-      <AppBar position="static">
-        <Toolbar>
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            BikeShare
-          </Typography>
-          <Button color="inherit" onClick={handleLogout}>
-            Cerrar Sesión
-          </Button>
-        </Toolbar>
-      </AppBar>
       <Box sx={{ 
-        flex: 1, 
+        height: '100vh',
         display: 'flex', 
         flexDirection: 'column',
-        p: 3,
-        bgcolor: 'background.default'
+        overflow: 'hidden'
       }}>
-        <Paper sx={{ 
-          flex: 1, 
+        <AppBar position="static" elevation={0}>
+          <Toolbar>
+            <Typography variant="h6" sx={{ flexGrow: 1, fontWeight: 600 }}>
+              BikeShare
+            </Typography>
+            <Button color="inherit" onClick={handleLogout}>
+              Cerrar Sesión
+            </Button>
+          </Toolbar>
+        </AppBar>
+
+        <Box sx={{ 
+          flex: 1,
           display: 'flex', 
           flexDirection: 'column',
-          borderRadius: 2,
+          p: 3,
+          bgcolor: 'background.default',
           overflow: 'hidden'
         }}>
-                    <Tabs 
-            value={tab} 
-            onChange={(e, newValue) => setTab(newValue)}
-            sx={{ 
-              borderBottom: 1, 
-              borderColor: 'divider',
-              bgcolor: 'background.paper'
-            }}
-          >
-            <Tab label="Mapa" />
-            <Tab label="Mis Reservas" />
-            <Tab label="Viajes Activos" />  {/* Nueva pestaña */}
-            <Tab label="Historial" />
-          </Tabs>
           <Box sx={{ 
-            flex: 1,
-            overflow: 'auto',
-            p: 2
+            flex: 1, 
+            display: 'flex', 
+            flexDirection: 'column',
+            bgcolor: 'background.paper',
+            borderRadius: 3,
+            overflow: 'hidden',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
           }}>
-            {tab === 0 && <BikeMap />}
-            {tab === 1 && <ReservationList />}
-            {tab === 2 && <ActiveRides />}  {/* Nuevo componente */}
-            {tab === 3 && <RideHistory />}  {/* Actualizado a índice 3 */}
+            <Tabs 
+              value={tab} 
+              onChange={(e, newValue) => setTab(newValue)}
+              sx={{ 
+                borderBottom: 1, 
+                borderColor: 'divider',
+                bgcolor: 'background.paper',
+                px: 2
+              }}
+            >
+              <Tab label="Mapa" />
+              <Tab label="Mis Reservas" />
+              <Tab label="Viajes Activos" />
+              <Tab label="Historial" />
+            </Tabs>
+            <Box sx={{ 
+              flex: 1,
+              overflow: 'auto',
+              p: 2
+            }}>
+              {tab === 0 && <BikeMap />}
+              {tab === 1 && <ReservationList />}
+              {tab === 2 && <ActiveRides />}
+              {tab === 3 && <RideHistory />}
+            </Box>
           </Box>
-        </Paper>
+        </Box>
       </Box>
-    </Box>
     </ThemeProvider>
   )
 }

@@ -1,48 +1,180 @@
 import { useState } from 'react';
 import { supabase } from '../../services/supabase';
-import { Box, TextField, Button, Typography } from '@mui/material';
+import { Box, TextField, Button, Typography, InputAdornment, Link } from '@mui/material';
+import EmailIcon from '@mui/icons-material/Email';
+import LockIcon from '@mui/icons-material/Lock';
+import { motion } from 'framer-motion';
 
 const LoginForm = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isRegistering, setIsRegistering] = useState(false);
 
-  const handleLogin = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    if (error) alert(error.message);
+    try {
+      if (isRegistering) {
+        const { error } = await supabase.auth.signUp({
+          email,
+          password,
+        });
+        if (error) throw error;
+        alert('Revisa tu email para confirmar el registro');
+      } else {
+        const { error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+        if (error) throw error;
+      }
+    } catch (error) {
+      alert(error.message);
+    }
   };
 
   return (
-    <Box component="form" onSubmit={handleLogin} sx={{ mt: 1 }}>
-      <TextField
-        margin="normal"
-        required
-        fullWidth
-        label="Email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-      />
-      <TextField
-        margin="normal"
-        required
-        fullWidth
-        label="Password"
-        type="password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-      />
-      <Button
-        type="submit"
-        fullWidth
-        variant="contained"
-        sx={{ mt: 3, mb: 2 }}
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+    >
+      <Box 
+        component="form" 
+        onSubmit={handleSubmit} 
+        sx={{ 
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: 3,
+          width: '100%',
+          maxWidth: 400,
+          bgcolor: 'white',
+          p: 4,
+          borderRadius: 1,
+          boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
+        }}
       >
-        Sign In
-      </Button>
-    </Box>
+        <Box
+          component="img"
+          src="/logobikeshare.jpg"
+          alt="BikeShare Logo"
+          sx={{
+            width: 180,
+            height: 'auto',
+            borderRadius: 2,
+          }}
+        />
+        
+        <Typography 
+          variant="h4" 
+          component="h1" 
+          sx={{ 
+            color: '#2E7D32',
+            fontWeight: 700,
+            textAlign: 'center',
+          }}
+        >
+          {isRegistering ? 'Crear cuenta' : 'Bienvenido'}
+        </Typography>
+
+        <TextField
+          required
+          fullWidth
+          label="Email"
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <EmailIcon sx={{ color: '#2E7D32' }} />
+              </InputAdornment>
+            ),
+          }}
+          sx={{
+            '& .MuiOutlinedInput-root': {
+              borderRadius: 2,
+              backgroundColor: 'white',
+              '&:hover fieldset': {
+                borderColor: '#2E7D32',
+              },
+              '&.Mui-focused fieldset': {
+                borderColor: '#2E7D32',
+              }
+            },
+            '& .MuiInputLabel-root.Mui-focused': {
+              color: '#2E7D32'
+            }
+          }}
+        />
+
+        <TextField
+          required
+          fullWidth
+          label="Contraseña"
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <LockIcon sx={{ color: '#2E7D32' }} />
+              </InputAdornment>
+            ),
+          }}
+          sx={{
+            '& .MuiOutlinedInput-root': {
+              borderRadius: 2,
+              backgroundColor: 'white',
+              '&:hover fieldset': {
+                borderColor: '#2E7D32',
+              },
+              '&.Mui-focused fieldset': {
+                borderColor: '#2E7D32',
+              }
+            },
+            '& .MuiInputLabel-root.Mui-focused': {
+              color: '#2E7D32'
+            }
+          }}
+        />
+
+        <Button
+          type="submit"
+          fullWidth
+          variant="contained"
+          sx={{ 
+            py: 1.5,
+            borderRadius: 2,
+            fontSize: '1.1rem',
+            fontWeight: 600,
+            backgroundColor: '#2E7D32',
+            '&:hover': {
+              backgroundColor: '#1B5E20',
+              transform: 'translateY(-2px)',
+            },
+            transition: 'all 0.3s ease-in-out',
+          }}
+        >
+          {isRegistering ? 'Registrarse' : 'Iniciar Sesión'}
+        </Button>
+
+        <Link
+          component="button"
+          variant="body2"
+          onClick={() => setIsRegistering(!isRegistering)}
+          sx={{
+            color: '#2E7D32',
+            textDecoration: 'none',
+            '&:hover': {
+              textDecoration: 'underline',
+            }
+          }}
+        >
+          {isRegistering ? '¿Ya tienes cuenta? Inicia sesión' : '¿No tienes cuenta? Regístrate'}
+        </Link>
+      </Box>
+    </motion.div>
   );
 };
 

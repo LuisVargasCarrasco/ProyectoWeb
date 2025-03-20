@@ -1,4 +1,14 @@
+/* Add these styles at the top of the file */
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
 #root {
+  height: 100vh;
+  overflow: hidden;
   max-width: 100%;
   margin: 0;
   padding: 0;
