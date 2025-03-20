@@ -4,6 +4,7 @@ import BikeMap from './components/Map/BikeMap'
 import LoginForm from './components/Auth/LoginFrom'
 import ReservationList from './components/Bikes/ReservationList'
 import RideHistory from './components/Bikes/RideHistory'
+import ActiveRides from './components/Bikes/ActiveRides'  
 import './App.css'
 import { supabase } from './services/supabase'
 
@@ -72,7 +73,7 @@ function App() {
           borderRadius: 2,
           overflow: 'hidden'
         }}>
-          <Tabs 
+                    <Tabs 
             value={tab} 
             onChange={(e, newValue) => setTab(newValue)}
             sx={{ 
@@ -83,6 +84,7 @@ function App() {
           >
             <Tab label="Mapa" />
             <Tab label="Mis Reservas" />
+            <Tab label="Viajes Activos" />  {/* Nueva pestaña */}
             <Tab label="Historial" />
           </Tabs>
           <Box sx={{ 
@@ -92,7 +94,8 @@ function App() {
           }}>
             {tab === 0 && <BikeMap />}
             {tab === 1 && <ReservationList />}
-            {tab === 2 && <RideHistory />}
+            {tab === 2 && <ActiveRides />}  {/* Nuevo componente */}
+            {tab === 3 && <RideHistory />}  {/* Actualizado a índice 3 */}
           </Box>
         </Paper>
       </Box>

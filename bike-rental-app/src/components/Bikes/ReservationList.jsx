@@ -74,7 +74,7 @@ const ReservationList = () => {
   
       // Create new trip
       const { error: tripError } = await supabase
-        .from('trip')  // Changed from 'route' to 'trip'
+        .from('trip')
         .insert({
           bike_id: bikeId,
           user_id: user.id,
@@ -92,12 +92,14 @@ const ReservationList = () => {
   
       if (bikeError) throw bikeError
       
+      // Show success message
+      alert('Bicicleta desbloqueada. ¡Buen viaje!')
       fetchReservedBikes()
     } catch (err) {
       console.error('Error unlocking bike:', err)
       setError('Error al desbloquear la bicicleta: ' + err.message)
     }
-  }  
+  }
 
   const handleReturn = async () => {
     if (!selectedLocation || !selectedBikeId) return
