@@ -63,19 +63,41 @@ const ReservationList = () => {
 
   const handleUnlock = async (bikeId) => {
     try {
-      const { error } = await supabase
+      const { data: { user } } = await supabase.auth.getUser()
+      
+      // Get current location
+      const { data: bike } = await supabase
+        .from('bike')
+        .select('current_location_id')
+        .eq('id', bikeId)
+        .single()
+  
+      // Create new trip
+      const { error: tripError } = await supabase
+        .from('trip')  // Changed from 'route' to 'trip'
+        .insert({
+          bike_id: bikeId,
+          user_id: user.id,
+          start_location_id: bike.current_location_id,
+          status: 'active'
+        })
+  
+      if (tripError) throw tripError
+  
+      // Update bike status
+      const { error: bikeError } = await supabase
         .from('bike')
         .update({ status: 'in_use' })
         .eq('id', bikeId)
-
-      if (error) throw error
+  
+      if (bikeError) throw bikeError
       
       fetchReservedBikes()
     } catch (err) {
       console.error('Error unlocking bike:', err)
-      setError('Error al desbloquear la bicicleta')
+      setError('Error al desbloquear la bicicleta: ' + err.message)
     }
-  }
+  }  
 
   const handleReturn = async () => {
     if (!selectedLocation || !selectedBikeId) return
