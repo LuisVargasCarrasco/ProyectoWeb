@@ -19,14 +19,18 @@
 .map-container {
   flex: 1;
   min-height: 0;
-  border-radius: 8px;
+  border-radius: 12px;
   overflow: hidden;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
 }
 
 .main-paper {
   height: 100%;
   display: flex;
   flex-direction: column;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
 }
 
 .tab-content {
@@ -37,9 +41,103 @@
 
 .card {
   margin-bottom: 16px;
-  transition: transform 0.2s ease-in-out;
+  transition: all 0.3s ease;
+  border-radius: 12px !important;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1) !important;
 }
 
 .card:hover {
   transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0,0,0,0.15) !important;
+}
+
+/* Nuevos estilos */
+.MuiTabs-root {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+.MuiTab-root {
+  text-transform: none !important;
+  font-weight: 600 !important;
+  min-width: 120px !important;
+}
+
+.MuiTab-root.Mui-selected {
+  color: #2E7D32 !important;
+}
+
+.MuiAppBar-root {
+  background-color: #2E7D32 !important;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+}
+
+.MuiButton-contained {
+  text-transform: none !important;
+  font-weight: 600 !important;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+  transition: all 0.3s ease !important;
+}
+
+.MuiButton-contained:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15) !important;
+}
+
+.MuiDialog-paper {
+  border-radius: 12px !important;
+  box-shadow: 0 8px 16px rgba(0,0,0,0.1) !important;
+}
+
+.MuiChip-root {
+  font-weight: 500 !important;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05) !important;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #2E7D32;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #1B5E20;
+}
+
+.MuiTypography-root {
+  color: rgba(0, 0, 0, 0.87);
+}
+
+.MuiTypography-subtitle1 {
+  color: rgba(0, 0, 0, 0.6);
+}
+
+.MuiFormControl-root {
+  margin: 8px 0 !important;
+}
+
+.MuiOutlinedInput-root {
+  border-radius: 8px !important;
+}
+
+.MuiAlert-root {
+  animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

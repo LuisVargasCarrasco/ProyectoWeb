@@ -7,6 +7,48 @@ import RideHistory from './components/Bikes/RideHistory'
 import ActiveRides from './components/Bikes/ActiveRides'  
 import './App.css'
 import { supabase } from './services/supabase'
+import { ThemeProvider, createTheme } from '@mui/material/styles';
+
+const theme = createTheme({
+  palette: {
+    primary: {
+      main: '#2E7D32', // Verde más suave
+      light: '#4CAF50',
+      dark: '#1B5E20',
+    },
+    secondary: {
+      main: '#FF5722', // Naranja para contraste
+    },
+    background: {
+      default: '#F5F5F5',
+      paper: '#FFFFFF',
+    }
+  },
+  shape: {
+    borderRadius: 12
+  },
+  components: {
+    MuiButton: {
+      styleOverrides: {
+        root: {
+          textTransform: 'none',
+          fontWeight: 600
+        }
+      }
+    },
+    MuiCard: {
+      styleOverrides: {
+        root: {
+          boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+          transition: 'transform 0.2s ease-in-out',
+          '&:hover': {
+            transform: 'translateY(-2px)'
+          }
+        }
+      }
+    }
+  }
+});
 
 function App() {
   const [session, setSession] = useState(null)
@@ -44,6 +86,7 @@ function App() {
   }
 
   return (
+    <ThemeProvider theme={theme}>
     <Box sx={{ 
       display: 'flex', 
       flexDirection: 'column', 
@@ -100,6 +143,7 @@ function App() {
         </Paper>
       </Box>
     </Box>
+    </ThemeProvider>
   )
 }
 

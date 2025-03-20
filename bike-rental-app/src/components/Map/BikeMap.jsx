@@ -79,15 +79,19 @@ const BikeMap = () => {
     <Box sx={{ 
       display: 'flex', 
       flexDirection: 'column',
-      height: '100%'
+      height: '100%',
+      gap: 2
     }}>
-      <Box sx={{ 
-        display: 'flex', 
-        alignItems: 'center', 
-        justifyContent: 'space-between',
-        mb: 2
-      }}>
-        <Typography variant="h5">
+      <Paper 
+        elevation={2} 
+        sx={{ 
+          p: 2,
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'space-between',
+        }}
+      >
+        <Typography variant="h5" sx={{ fontWeight: 600 }}>
           Estaciones de Bicicletas
         </Typography>
         <Chip 
@@ -96,14 +100,21 @@ const BikeMap = () => {
             acc + loc.bikes.filter(b => b.status === 'available').length, 0
           )} bicicletas disponibles`}
           color="primary"
+          sx={{ 
+            px: 1,
+            '& .MuiChip-label': { fontWeight: 500 }
+          }}
         />
-      </Box>
-      <Paper elevation={3} sx={{ 
-        flex: 1,
-        minHeight: 0,
-        borderRadius: 2,
-        overflow: 'hidden'
-      }}>
+      </Paper>
+      
+      <Paper 
+        elevation={3} 
+        sx={{ 
+          flex: 1,
+          minHeight: 0,
+          overflow: 'hidden'
+    }}
+  >
         <LoadScript googleMapsApiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}>
           <GoogleMap
             mapContainerStyle={{
@@ -123,47 +134,74 @@ const BikeMap = () => {
           >
             {locations.map((location) => (
               <Marker
-                key={location.id}
-                position={{ lat: location.latitude, lng: location.longitude }}
-                onClick={() => handleMarkerClick(location)}
-                icon={{
-                  url: location.bikes.some(b => b.status === 'available')
-                    ? 'https://maps.google.com/mapfiles/ms/icons/green-dot.png'
-                    : 'https://maps.google.com/mapfiles/ms/icons/red-dot.png',
-                  scaledSize: new window.google.maps.Size(32, 32)
-                }}
-              />
+              key={location.id}
+              position={{ lat: location.latitude, lng: location.longitude }}
+              onClick={() => handleMarkerClick(location)}
+              icon={{
+                url: location.bikes.some(b => b.status === 'available')
+                  ? '/bike-station-blue.png'  // Create these icons
+                  : '/bike-station-red.png',
+                scaledSize: new window.google.maps.Size(40, 40)
+              }}
+            />  
             ))}
             {selectedLocation && (
               <InfoWindow
                 position={{ lat: selectedLocation.latitude, lng: selectedLocation.longitude }}
                 onCloseClick={() => setSelectedLocation(null)}
               >
-                <Box sx={{ p: 1 }}>
-                  <Typography variant="subtitle1" gutterBottom>
-                    {selectedLocation.location_name}
-                  </Typography>
-                  <Typography variant="body2" gutterBottom>
-                    {selectedLocation.address}
-                  </Typography>
-                  <Typography variant="body2" gutterBottom>
-                    Bicicletas disponibles: {
-                      selectedLocation.bikes.filter(b => b.status === 'available').length
-                    }
-                  </Typography>
-                  {selectedLocation.bikes.some(b => b.status === 'available') && (
-                    <Button
-                      variant="contained"
-                      size="small"
-                      startIcon={<DirectionsBikeIcon />}
-                      onClick={() => handleReserveBike(
-                        selectedLocation.bikes.find(b => b.status === 'available').id
-                      )}
-                    >
-                      Reservar
-                    </Button>
-                  )}
-                </Box>
+                <Box sx={{ 
+    p: 1,
+    minWidth: 200,
+    '& .MuiTypography-root': { mb: 1 }
+  }}>
+    <Typography 
+      variant="subtitle1" 
+      sx={{ 
+        fontWeight: 600,
+        color: 'primary.main'
+      }}
+    >
+      {selectedLocation.location_name}
+    </Typography>
+    <Typography 
+      variant="body2" 
+      sx={{ color: 'text.secondary' }}
+    >
+      {selectedLocation.address}
+    </Typography>
+    <Typography 
+      variant="body2" 
+      sx={{ 
+        bgcolor: 'primary.light',
+        color: 'white',
+        p: 1,
+        borderRadius: 1,
+        display: 'inline-block'
+      }}
+    >
+      Bicicletas disponibles: {
+        selectedLocation.bikes.filter(b => b.status === 'available').length
+      }
+    </Typography>
+    {selectedLocation.bikes.some(b => b.status === 'available') && (
+      <Button
+        variant="contained"
+        size="small"
+        startIcon={<DirectionsBikeIcon />}
+        onClick={() => handleReserveBike(
+          selectedLocation.bikes.find(b => b.status === 'available').id
+        )}
+        sx={{ 
+          mt: 2,
+          width: '100%',
+          boxShadow: 2
+        }}
+      >
+        Reservar
+      </Button>
+    )}
+  </Box>
               </InfoWindow>
             )}
           </GoogleMap>
