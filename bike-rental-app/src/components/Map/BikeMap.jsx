@@ -1,5 +1,5 @@
-import { GoogleMap, LoadScript, Marker, InfoWindow } from '@react-google-maps/api';
-import { useState, useEffect } from 'react';
+import { GoogleMap, useLoadScript, Marker, InfoWindow } from '@react-google-maps/api';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Box, Paper, Typography, CircularProgress, Chip, Alert, Button } from '@mui/material';
 import { supabase } from '../../services/supabase';
 import PedalBikeIcon from '@mui/icons-material/PedalBike';
@@ -10,27 +10,18 @@ const BikeMap = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedLocation, setSelectedLocation] = useState(null);
-  const center = { lat: 41.3851, lng: 2.1734 }; // Plaza Catalunya
 
-  useEffect(() => {
-    fetchLocationsWithBikes();
-    // Set up real-time subscription
-    const subscription = supabase
-      .channel('bike-channel')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'bike' }, fetchLocationsWithBikes)
-      .subscribe();
+  const center = useMemo(() => ({ lat: 41.3851, lng: 2.1734 }), []); // Plaza Catalunya
 
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, []);
+  const { isLoaded, loadError } = useLoadScript({
+    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
+  });
 
-  const fetchLocationsWithBikes = async () => {
+  const fetchLocationsWithBikes = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
 
-      // First get all locations
       const { data: locations, error: locError } = await supabase
         .from('location')
         .select(`
@@ -39,8 +30,6 @@ const BikeMap = () => {
         `);
 
       if (locError) throw locError;
-
-      console.log('Locations with bikes:', locations);
       setLocations(locations || []);
 
     } catch (err) {
@@ -49,12 +38,28 @@ const BikeMap = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const handleMarkerClick = (location) => {
-    console.log('Selected location:', location);
+  useEffect(() => {
+    fetchLocationsWithBikes();
+    
+    const subscription = supabase
+      .channel('bike-channel')
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'bike' 
+      }, fetchLocationsWithBikes)
+      .subscribe();
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [fetchLocationsWithBikes]);
+
+  const handleMarkerClick = useCallback((location) => {
     setSelectedLocation(location);
-  };
+  }, []);
 
   const handleReserveBike = async (bikeId) => {
     try {
@@ -73,7 +78,43 @@ const BikeMap = () => {
     }
   };
 
-  // ... loading and error states remain the same ...
+  if (loadError) {
+    return (
+      <Alert 
+        severity="error" 
+        sx={{ m: 2 }}
+      >
+        Error al cargar el mapa: {loadError.message}
+      </Alert>
+    );
+  }
+
+  if (!isLoaded) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" height="100%">
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (loading && !locations.length) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" height="100%">
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Alert 
+        severity="error" 
+        sx={{ m: 2 }}
+      >
+        {error}
+      </Alert>
+    );
+  }
 
   return (
     <Box sx={{ 
@@ -112,100 +153,102 @@ const BikeMap = () => {
         sx={{ 
           flex: 1,
           minHeight: 0,
-          overflow: 'hidden'
-    }}
-  >
-        <LoadScript googleMapsApiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}>
-          <GoogleMap
-            mapContainerStyle={{
-              width: '100%',
-              height: '100%'
-            }}
-            center={center}
-            zoom={14}
-            options={{
-              styles: [{ elementType: "labels", featureType: "poi", stylers: [{ visibility: "off" }] }],
-              disableDefaultUI: false,
-              zoomControl: true,
-              mapTypeControl: false,
-              streetViewControl: false,
-              fullscreenControl: true
-            }}
-          >
-            {locations.map((location) => (
-              <Marker
+          overflow: 'hidden',
+          borderRadius: 2
+        }}
+      >
+        <GoogleMap
+          mapContainerStyle={{
+            width: '100%',
+            height: '100%'
+          }}
+          center={center}
+          zoom={14}
+          options={{
+            styles: [{ elementType: "labels", featureType: "poi", stylers: [{ visibility: "off" }] }],
+            disableDefaultUI: false,
+            zoomControl: true,
+            mapTypeControl: false,
+            streetViewControl: false,
+            fullscreenControl: true
+          }}
+        >
+          {locations.map((location) => (
+            <Marker
               key={location.id}
               position={{ lat: location.latitude, lng: location.longitude }}
               onClick={() => handleMarkerClick(location)}
               icon={{
                 url: location.bikes.some(b => b.status === 'available')
-                  ? '/bike-station-blue.png'  // Create these icons
+                  ? '/bike-station-blue.png'
                   : '/bike-station-red.png',
                 scaledSize: new window.google.maps.Size(40, 40)
               }}
             />  
-            ))}
-            {selectedLocation && (
-              <InfoWindow
-                position={{ lat: selectedLocation.latitude, lng: selectedLocation.longitude }}
-                onCloseClick={() => setSelectedLocation(null)}
-              >
-                <Box sx={{ 
-    p: 1,
-    minWidth: 200,
-    '& .MuiTypography-root': { mb: 1 }
-  }}>
-    <Typography 
-      variant="subtitle1" 
-      sx={{ 
-        fontWeight: 600,
-        color: 'primary.main'
-      }}
-    >
-      {selectedLocation.location_name}
-    </Typography>
-    <Typography 
-      variant="body2" 
-      sx={{ color: 'text.secondary' }}
-    >
-      {selectedLocation.address}
-    </Typography>
-    <Typography 
-      variant="body2" 
-      sx={{ 
-        bgcolor: 'primary.light',
-        color: 'white',
-        p: 1,
-        borderRadius: 1,
-        display: 'inline-block'
-      }}
-    >
-      Bicicletas disponibles: {
-        selectedLocation.bikes.filter(b => b.status === 'available').length
-      }
-    </Typography>
-    {selectedLocation.bikes.some(b => b.status === 'available') && (
-      <Button
-        variant="contained"
-        size="small"
-        startIcon={<DirectionsBikeIcon />}
-        onClick={() => handleReserveBike(
-          selectedLocation.bikes.find(b => b.status === 'available').id
-        )}
-        sx={{ 
-          mt: 2,
-          width: '100%',
-          boxShadow: 2
-        }}
-      >
-        Reservar
-      </Button>
-    )}
-  </Box>
-              </InfoWindow>
-            )}
-          </GoogleMap>
-        </LoadScript>
+          ))}
+          {selectedLocation && (
+            <InfoWindow
+              position={{ 
+                lat: selectedLocation.latitude, 
+                lng: selectedLocation.longitude 
+              }}
+              onCloseClick={() => setSelectedLocation(null)}
+            >
+              <Box sx={{ 
+                p: 1,
+                minWidth: 200,
+                '& .MuiTypography-root': { mb: 1 }
+              }}>
+                <Typography 
+                  variant="subtitle1" 
+                  sx={{ 
+                    fontWeight: 600,
+                    color: 'primary.main'
+                  }}
+                >
+                  {selectedLocation.location_name}
+                </Typography>
+                <Typography 
+                  variant="body2" 
+                  sx={{ color: 'text.secondary' }}
+                >
+                  {selectedLocation.address}
+                </Typography>
+                <Typography 
+                  variant="body2" 
+                  sx={{ 
+                    bgcolor: 'primary.light',
+                    color: 'white',
+                    p: 1,
+                    borderRadius: 1,
+                    display: 'inline-block'
+                  }}
+                >
+                  Bicicletas disponibles: {
+                    selectedLocation.bikes.filter(b => b.status === 'available').length
+                  }
+                </Typography>
+                {selectedLocation.bikes.some(b => b.status === 'available') && (
+                  <Button
+                    variant="contained"
+                    size="small"
+                    startIcon={<DirectionsBikeIcon />}
+                    onClick={() => handleReserveBike(
+                      selectedLocation.bikes.find(b => b.status === 'available').id
+                    )}
+                    sx={{ 
+                      mt: 2,
+                      width: '100%',
+                      boxShadow: 2
+                    }}
+                  >
+                    Reservar
+                  </Button>
+                )}
+              </Box>
+            </InfoWindow>
+          )}
+        </GoogleMap>
       </Paper>
     </Box>
   );

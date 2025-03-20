@@ -1,10 +1,15 @@
 import { useState, useEffect } from 'react'
-import { Container, Box, Tabs, Tab, AppBar, Toolbar, Typography, Button } from '@mui/material'
+import { 
+  Container, Box, Tabs, Tab, AppBar, Toolbar, 
+  Typography, Button, IconButton, Menu, MenuItem 
+} from '@mui/material'
+import AccountCircleIcon from '@mui/icons-material/AccountCircle'
 import BikeMap from './components/Map/BikeMap'
 import LoginForm from './components/Auth/LoginFrom'
 import ReservationList from './components/Bikes/ReservationList'
 import RideHistory from './components/Bikes/RideHistory'
 import ActiveRides from './components/Bikes/ActiveRides'
+import UserProfile from './components/Auth/UserProfile'
 import './App.css'
 import { supabase } from './services/supabase'
 import { ThemeProvider, createTheme } from '@mui/material/styles'
@@ -53,6 +58,8 @@ const theme = createTheme({
 function App() {
   const [session, setSession] = useState(null)
   const [tab, setTab] = useState(0)
+  const [anchorEl, setAnchorEl] = useState(null)
+  const open = Boolean(anchorEl)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -64,8 +71,17 @@ function App() {
     })
   }, [])
 
+  const handleMenu = (event) => {
+    setAnchorEl(event.currentTarget)
+  }
+
+  const handleClose = () => {
+    setAnchorEl(null)
+  }
+
   const handleLogout = async () => {
     await supabase.auth.signOut()
+    handleClose()
   }
 
   if (!session) {
@@ -97,12 +113,36 @@ function App() {
       }}>
         <AppBar position="static" elevation={0}>
           <Toolbar>
-            <Typography variant="h6" sx={{ flexGrow: 1, fontWeight: 600 }}>
+            <Typography color="inherit" variant="h6" sx={{ flexGrow: 1, fontWeight: 600 }}>
               BikeShare
             </Typography>
-            <Button color="inherit" onClick={handleLogout}>
-              Cerrar Sesión
-            </Button>
+            <IconButton
+              color="inherit"
+              onClick={handleMenu}
+              sx={{ ml: 2 }}
+            >
+              <AccountCircleIcon />
+            </IconButton>
+            <Menu
+              anchorEl={anchorEl}
+              open={open}
+              onClose={handleClose}
+              anchorOrigin={{
+                vertical: 'bottom',
+                horizontal: 'right',
+              }}
+              transformOrigin={{
+                vertical: 'top',
+                horizontal: 'right',
+              }}
+            >
+              <MenuItem onClick={() => { setTab(4); handleClose(); }}>
+                Mi Perfil
+              </MenuItem>
+              <MenuItem onClick={handleLogout}>
+                Cerrar Sesión
+              </MenuItem>
+            </Menu>
           </Toolbar>
         </AppBar>
 
@@ -137,6 +177,7 @@ function App() {
               <Tab label="Mis Reservas" />
               <Tab label="Viajes Activos" />
               <Tab label="Historial" />
+              <Tab label="Mi Perfil" sx={{ ml: 'auto' }} />
             </Tabs>
             <Box sx={{ 
               flex: 1,
@@ -147,6 +188,7 @@ function App() {
               {tab === 1 && <ReservationList />}
               {tab === 2 && <ActiveRides />}
               {tab === 3 && <RideHistory />}
+              {tab === 4 && <UserProfile />}
             </Box>
           </Box>
         </Box>
