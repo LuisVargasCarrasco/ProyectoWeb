@@ -159,7 +159,7 @@ function App() {
             display: 'flex', 
             flexDirection: 'column',
             bgcolor: 'background.paper',
-            borderRadius: 3,
+            borderRadius: 2,
             overflow: 'hidden',
             boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
           }}>

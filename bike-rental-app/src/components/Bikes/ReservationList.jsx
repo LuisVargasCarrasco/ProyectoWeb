@@ -2,12 +2,19 @@ import { useState, useEffect } from 'react'
 import { 
   Box, Card, CardContent, Typography, Button, CircularProgress, Alert,
   Dialog, DialogTitle, DialogContent, DialogActions, Select, MenuItem, 
-  FormControl, InputLabel 
+  FormControl, InputLabel, Paper, Avatar, Chip 
 } from '@mui/material'
 import { supabase } from '../../services/supabase'
 import InfoIcon from '@mui/icons-material/Info'
 import DirectionsBikeIcon from '@mui/icons-material/DirectionsBike'
 import LocationOnIcon from '@mui/icons-material/LocationOn'
+import TimerIcon from '@mui/icons-material/Timer'
+
+const TRIP_STATUS = {
+  RESERVED: 'reserved',
+  ACTIVE: 'active',
+  COMPLETED: 'completed'
+}
 
 const ReservationList = () => {
   const [reservedBikes, setReservedBikes] = useState([])
@@ -21,16 +28,6 @@ const ReservationList = () => {
   useEffect(() => {
     fetchReservedBikes()
     fetchLocations()
-
-    const subscription = supabase
-      .channel('bike-changes')
-      .on('postgres_changes', 
-        { event: '*', schema: 'public', table: 'bike' }, 
-        () => fetchReservedBikes()
-      )
-      .subscribe()
-
-    return () => subscription.unsubscribe()
   }, [])
 
   const fetchLocations = async () => {
@@ -50,6 +47,8 @@ const ReservationList = () => {
   const fetchReservedBikes = async () => {
     try {
       setLoading(true)
+      const { data: { user } } = await supabase.auth.getUser()
+      
       const { data, error } = await supabase
         .from('bike')
         .select(`
@@ -80,38 +79,62 @@ const ReservationList = () => {
         .select('current_location_id')
         .eq('id', bikeId)
         .single()
-
+  
+      const now = new Date().toISOString()
+  
+      // First create the trip
       const { error: tripError } = await supabase
         .from('trip')
         .insert({
           bike_id: bikeId,
           user_id: user.id,
           start_location_id: bike.current_location_id,
-          status: 'active'
+          start_time: now,
+          status: TRIP_STATUS.ACTIVE
         })
-
+  
       if (tripError) throw tripError
-
+  
+      // Update bike status but keep the current_location_id
       const { error: bikeError } = await supabase
         .from('bike')
-        .update({ status: 'in_use' })
+        .update({ 
+          status: 'in_use'
+          // Removed current_location_id: null
+        })
         .eq('id', bikeId)
-
+  
       if (bikeError) throw bikeError
       
       alert('¡Bicicleta desbloqueada! Disfruta tu viaje')
-      fetchReservedBikes()
+      await fetchReservedBikes()
     } catch (err) {
       console.error('Error unlocking bike:', err)
-      setError('Error al desbloquear la bicicleta')
+      setError('Error al desbloquear la bicicleta: ' + err.message)
     }
   }
-
+  
   const handleReturn = async () => {
     if (!selectedLocation || !selectedBikeId) return
 
     try {
-      const { error } = await supabase
+      const now = new Date().toISOString()
+
+      // Update trip status and end time
+      const { error: tripError } = await supabase
+        .from('trip')
+        .update({ 
+          status: TRIP_STATUS.COMPLETED,
+          end_time: now,
+          end_location_id: selectedLocation
+        })
+        .eq('bike_id', selectedBikeId)
+        .eq('status', TRIP_STATUS.ACTIVE)
+
+      if (tripError) throw tripError
+
+      // Update bike status and location
+      const { error: bikeError } = await supabase
         .from('bike')
         .update({ 
           status: 'available',
@@ -119,16 +142,17 @@ const ReservationList = () => {
         })
         .eq('id', selectedBikeId)
 
-      if (error) throw error
+      if (bikeError) throw bikeError
 
       setReturnDialog(false)
       setSelectedLocation('')
       setSelectedBikeId(null)
-      alert('Bicicleta devuelta correctamente')
-      fetchReservedBikes()
+      await fetchReservedBikes()
+
+      alert('¡Bicicleta devuelta correctamente!')
     } catch (err) {
       console.error('Error returning bike:', err)
-      setError('Error al devolver la bicicleta')
+      setError('Error al devolver la bicicleta: ' + err.message)
     }
   }
 
@@ -150,12 +174,41 @@ const ReservationList = () => {
 
   return (
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <Typography variant="h5" sx={{ mb: 3, fontWeight: 600 }}>
-        Mis Reservas Activas
-      </Typography>
+      <Paper 
+        elevation={0} 
+        sx={{ 
+          p: 2, 
+          mb: 3, 
+          bgcolor: 'primary.main', 
+          color: 'white',
+          borderRadius: 2,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between'
+        }}
+      >
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Avatar sx={{ bgcolor: 'white' }}>
+            <DirectionsBikeIcon color="primary" />
+          </Avatar>
+          <Typography variant="h5" sx={{ fontWeight: 600 }}>
+            Mis Reservas
+          </Typography>
+        </Box>
+        <Chip 
+          icon={<DirectionsBikeIcon />}
+          label={`${reservedBikes.length} ${reservedBikes.length === 1 ? 'reserva' : 'reservas'}`}
+          sx={{ 
+            bgcolor: 'white', 
+            color: 'primary.main',
+            '& .MuiChip-icon': { color: 'primary.main' }
+          }}
+        />
+      </Paper>
       
       {reservedBikes.length === 0 ? (
         <Card 
+          elevation={0}
           sx={{ 
             p: 4, 
             textAlign: 'center',
@@ -164,12 +217,14 @@ const ReservationList = () => {
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            gap: 2
+            gap: 2,
+            borderRadius: 2,
+            border: '1px dashed rgba(255,255,255,0.5)'
           }}
         >
           <InfoIcon sx={{ fontSize: 48 }} />
           <Box>
-            <Typography variant="h6" sx={{ mb: 1 }}>
+            <Typography variant="h6" sx={{ mb: 1, fontWeight: 500 }}>
               No tienes reservas activas
             </Typography>
             <Typography variant="body1">
@@ -182,35 +237,58 @@ const ReservationList = () => {
           {reservedBikes.map(bike => (
             <Card 
               key={bike.id} 
+              elevation={0}
               sx={{ 
                 mb: 2,
+                border: '1px solid',
+                borderColor: 'divider',
+                borderRadius: 2,
                 '&:hover': {
-                  boxShadow: 6
+                  borderColor: 'primary.main',
+                  bgcolor: 'primary.50',
                 },
-                transition: 'box-shadow 0.3s'
+                transition: 'all 0.3s ease'
               }}
             >
               <CardContent>
-                <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <DirectionsBikeIcon color="primary" />
-                  Bicicleta #{bike.id}
-                </Typography>
-                <Typography 
-                  variant="body1" 
-                  sx={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    gap: 1,
-                    color: 'text.secondary',
-                    my: 1
-                  }}
-                >
-                  <LocationOnIcon />
-                  {bike.location?.location_name || 'Ubicación no disponible'}
-                </Typography>
-                <Box sx={{ display: 'flex', gap: 1, mt: 2 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+                  <Avatar sx={{ bgcolor: 'primary.light' }}>
+                    <DirectionsBikeIcon />
+                  </Avatar>
+                  <Box>
+                    <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                      Bicicleta #{bike.id}
+                      <Chip
+                        label={`Modelo ${bike.model_id}`}
+                        size="small"
+                        sx={{ ml: 1 }}
+                        color="primary"
+                        variant="outlined"
+                      />
+                    </Typography>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, mt: 0.5 }}>
+                      {bike.location && (
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 1
+                          }}
+                        >
+                          <LocationOnIcon fontSize="small" />
+                          Ubicación: {bike.location.location_name}
+                        </Typography>
+                      )}
+                    </Box>
+                  </Box>
+                </Box>
+
+                <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
                   <Button 
                     variant="contained"
+                    fullWidth
                     onClick={() => handleUnlock(bike.id)}
                     startIcon={<DirectionsBikeIcon />}
                   >
@@ -218,7 +296,6 @@ const ReservationList = () => {
                   </Button>
                   <Button 
                     variant="outlined"
-                    color="secondary"
                     onClick={() => {
                       setSelectedBikeId(bike.id)
                       setReturnDialog(true)
@@ -262,13 +339,11 @@ const ReservationList = () => {
           </FormControl>
         </DialogContent>
         <DialogActions>
-          <Button 
-            onClick={() => {
-              setReturnDialog(false)
-              setSelectedLocation('')
-              setSelectedBikeId(null)
-            }}
-          >
+          <Button onClick={() => {
+            setReturnDialog(false)
+            setSelectedLocation('')
+            setSelectedBikeId(null)
+          }}>
             Cancelar
           </Button>
           <Button 
