@@ -1,22 +1,43 @@
 import { useState, useEffect } from 'react'
-import { Box, Card, CardContent, Typography, Button, CircularProgress, Alert } from '@mui/material'
+import { 
+  Box, Card, CardContent, Typography, Button, CircularProgress, Alert,
+  Dialog, DialogTitle, DialogContent, DialogActions, Select, MenuItem, FormControl, InputLabel 
+} from '@mui/material'
 import { supabase } from '../../services/supabase'
 
 const ReservationList = () => {
   const [reservedBikes, setReservedBikes] = useState([])
+  const [locations, setLocations] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [returnDialog, setReturnDialog] = useState(false)
+  const [selectedLocation, setSelectedLocation] = useState('')
+  const [selectedBikeId, setSelectedBikeId] = useState(null)
 
   useEffect(() => {
     fetchReservedBikes()
+    fetchLocations()
   }, [])
+
+  const fetchLocations = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('location')
+        .select('id, location_name')
+
+      if (error) throw error
+      setLocations(data || [])
+    } catch (err) {
+      console.error('Error fetching locations:', err)
+      setError('Error al cargar las ubicaciones')
+    }
+  }
 
   const fetchReservedBikes = async () => {
     try {
       setLoading(true)
       const { data: { user } } = await supabase.auth.getUser()
       
-      // Get bikes that are reserved by the current user
       const { data, error } = await supabase
         .from('bike')
         .select(`
@@ -56,6 +77,30 @@ const ReservationList = () => {
     }
   }
 
+  const handleReturn = async () => {
+    if (!selectedLocation || !selectedBikeId) return
+
+    try {
+      const { error } = await supabase
+        .from('bike')
+        .update({ 
+          status: 'available',
+          current_location_id: selectedLocation 
+        })
+        .eq('id', selectedBikeId)
+
+      if (error) throw error
+
+      setReturnDialog(false)
+      setSelectedLocation('')
+      setSelectedBikeId(null)
+      fetchReservedBikes()
+    } catch (err) {
+      console.error('Error returning bike:', err)
+      setError('Error al devolver la bicicleta')
+    }
+  }
+
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" m={4}>
@@ -74,31 +119,82 @@ const ReservationList = () => {
 
   return (
     <Box>
-      <Typography variant="h5" sx={{ mb: 2 }}>Mis Bicicletas Reservadas</Typography>
-      {reservedBikes.length === 0 ? (
-        <Alert severity="info">No tienes bicicletas reservadas</Alert>
-      ) : (
-        reservedBikes.map(bike => (
-          <Card key={bike.id} sx={{ mb: 2 }}>
-            <CardContent>
-              <Typography variant="h6">Bicicleta #{bike.id}</Typography>
-              <Typography variant="body1" gutterBottom>
-                Ubicación: {bike.location?.location_name}
-              </Typography>
-              <Typography variant="body2" color="textSecondary" gutterBottom>
-                Dirección: {bike.location?.address}
-              </Typography>
-              <Button 
-                variant="contained" 
-                onClick={() => handleUnlock(bike.id)}
-                sx={{ mt: 1 }}
-              >
-                Desbloquear
-              </Button>
-            </CardContent>
-          </Card>
-        ))
-      )}
+      <Typography variant="h5" sx={{ mb: 2 }}>
+        Mis Bicicletas en Uso
+      </Typography>
+      
+      {reservedBikes.map(bike => (
+  <Card key={bike.id} sx={{ mb: 2 }}>
+    <CardContent>
+      <Typography variant="h6">Bicicleta #{bike.id}</Typography>
+      <Typography variant="body1" gutterBottom>
+        Ubicación actual: {bike.location?.location_name || 'En uso'}
+      </Typography>
+      <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
+        <Button 
+          variant="contained"
+          color="primary"
+          onClick={() => handleUnlock(bike.id)}
+        >
+          Desbloquear
+        </Button>
+        <Button 
+          variant="outlined"
+          color="secondary"
+          onClick={() => {
+            setSelectedBikeId(bike.id)
+            setReturnDialog(true)
+          }}
+        >
+          Devolver Bicicleta
+        </Button>
+      </Box>
+    </CardContent>
+  </Card>
+))}
+
+      <Dialog 
+        open={returnDialog} 
+        onClose={() => {
+          setReturnDialog(false)
+          setSelectedLocation('')
+          setSelectedBikeId(null)
+        }}
+      >
+        <DialogTitle>Devolver Bicicleta</DialogTitle>
+        <DialogContent>
+          <FormControl fullWidth sx={{ mt: 2 }}>
+            <InputLabel>Estación de devolución</InputLabel>
+            <Select
+              value={selectedLocation}
+              onChange={(e) => setSelectedLocation(e.target.value)}
+              label="Estación de devolución"
+            >
+              {locations.map((location) => (
+                <MenuItem key={location.id} value={location.id}>
+                  {location.location_name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => {
+            setReturnDialog(false)
+            setSelectedLocation('')
+            setSelectedBikeId(null)
+          }}>
+            Cancelar
+          </Button>
+          <Button 
+            onClick={handleReturn}
+            variant="contained"
+            disabled={!selectedLocation}
+          >
+            Confirmar Devolución
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   )
 }
