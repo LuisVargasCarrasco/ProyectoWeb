@@ -10,6 +10,8 @@ const BikeMap = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedLocation, setSelectedLocation] = useState(null);
+  const [userLocation, setUserLocation] = useState(null);
+  const [nearestLocation, setNearestLocation] = useState(null);
 
   const center = useMemo(() => ({ lat: 41.3851, lng: 2.1734 }), []); // Plaza Catalunya
 
@@ -56,6 +58,44 @@ const BikeMap = () => {
       subscription.unsubscribe();
     };
   }, [fetchLocationsWithBikes]);
+
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.watchPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          setUserLocation({ lat: latitude, lng: longitude });
+        },
+        (error) => {
+          console.error('Error getting user location:', error);
+          setError('Error al obtener la ubicación del usuario');
+        }
+      );
+    }
+  }, []);
+
+  useEffect(() => {
+    if (userLocation && locations.length > 0) {
+      const nearest = locations.reduce((prev, curr) => {
+        const prevDistance = getDistance(userLocation, { lat: prev.latitude, lng: prev.longitude });
+        const currDistance = getDistance(userLocation, { lat: curr.latitude, lng: curr.longitude });
+        return prevDistance < currDistance ? prev : curr;
+      });
+      setNearestLocation(nearest);
+    }
+  }, [userLocation, locations]);
+
+  const getDistance = (loc1, loc2) => {
+    const R = 6371; // Radius of the Earth in km
+    const dLat = (loc2.lat - loc1.lat) * (Math.PI / 180);
+    const dLng = (loc2.lng - loc1.lng) * (Math.PI / 180);
+    const a = 
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(loc1.lat * (Math.PI / 180)) * Math.cos(loc2.lat * (Math.PI / 180)) *
+      Math.sin(dLng / 2) * Math.sin(dLng / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c; // Distance in km
+  };
 
   const handleMarkerClick = useCallback((location) => {
     setSelectedLocation(location);
@@ -162,7 +202,7 @@ const BikeMap = () => {
             width: '100%',
             height: '100%'
           }}
-          center={center}
+          center={userLocation || center}
           zoom={14}
           options={{
             styles: [{ elementType: "labels", featureType: "poi", stylers: [{ visibility: "off" }] }],
@@ -247,6 +287,15 @@ const BikeMap = () => {
                 )}
               </Box>
             </InfoWindow>
+          )}
+          {userLocation && (
+            <Marker
+              position={userLocation}
+              icon={{
+                url: '/user-location.png',
+                scaledSize: new window.google.maps.Size(40, 40)
+              }}
+            />
           )}
         </GoogleMap>
       </Paper>
