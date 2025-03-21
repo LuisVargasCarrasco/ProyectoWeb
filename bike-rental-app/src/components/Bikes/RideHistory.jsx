@@ -112,12 +112,18 @@ const RideHistory = () => {
     }
   }, [directions])
 
-  const handleExpandMap = useCallback((tripId) => {
-    setExpandedMap(prev => ({
-      ...prev,
-      [tripId]: !prev[tripId]
-    }))
-  }, [])
+  const handleExpandMap = useCallback((trip) => {
+    setExpandedMap(prev => {
+      const newState = { ...prev, [trip.id]: !prev[trip.id] }
+      
+      // If expanding, fetch directions
+      if (newState[trip.id]) {
+        fetchDirections(trip)
+      }
+      
+      return newState
+    })
+  }, [fetchDirections])
 
   if (loading) {
     return (
@@ -233,12 +239,7 @@ const RideHistory = () => {
                     </Box>
                   </Box>
                   <IconButton 
-                    onClick={() => {
-                      handleExpandMap(trip.id)
-                      if (!expandedMap[trip.id]) {
-                        fetchDirections(trip)
-                      }
-                    }}
+                    onClick={() => handleExpandMap(trip)}
                     color="primary"
                   >
                     {expandedMap[trip.id] ? <ExpandLessIcon /> : <ExpandMoreIcon />}

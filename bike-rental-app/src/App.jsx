@@ -1,18 +1,19 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, memo } from 'react'
 import { 
   Container, Box, Tabs, Tab, AppBar, Toolbar, 
-  Typography, Button, IconButton, Menu, MenuItem 
+  Typography, IconButton, Menu, MenuItem 
 } from '@mui/material'
+import { ThemeProvider, createTheme } from '@mui/material/styles'
 import AccountCircleIcon from '@mui/icons-material/AccountCircle'
+import DirectionsBikeIcon from '@mui/icons-material/DirectionsBike'
 import BikeMap from './components/Map/BikeMap'
 import LoginForm from './components/Auth/LoginFrom'
 import ReservationList from './components/Bikes/ReservationList'
 import RideHistory from './components/Bikes/RideHistory'
 import ActiveRides from './components/Bikes/ActiveRides'
 import UserProfile from './components/Auth/UserProfile'
-import './App.css'
 import { supabase } from './services/supabase'
-import { ThemeProvider, createTheme } from '@mui/material/styles'
+import './App.css'
 
 const theme = createTheme({
   palette: {
@@ -53,7 +54,74 @@ const theme = createTheme({
       }
     }
   }
-});
+})
+
+const Logo = memo(() => (
+  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+    <Box
+      component="img"
+      src="/logobikeshare.jpg"
+      alt="BikeShare Logo"
+      sx={{ 
+        height: 40,
+        width: 'auto',
+        objectFit: 'contain'
+      }}
+    />
+    <Typography 
+      variant="h6" 
+      sx={{ 
+        fontWeight: 600,
+        display: 'flex',
+        alignItems: 'center'
+      }}
+    >
+      BikeShare
+    </Typography>
+  </Box>
+))
+
+const NavigationTabs = memo(({ value, onChange }) => (
+  <Tabs 
+    value={value} 
+    onChange={onChange}
+    sx={{ 
+      borderBottom: 1, 
+      borderColor: 'divider',
+      bgcolor: 'background.paper',
+      px: 2
+    }}
+  >
+    <Tab label="Mapa" />
+    <Tab label="Mis Reservas" />
+    <Tab label="Viajes Activos" />
+    <Tab label="Historial" />
+    <Tab label="Mi Perfil" sx={{ ml: 'auto' }} />
+  </Tabs>
+))
+
+const UserMenu = memo(({ anchorEl, open, onClose, onProfile, onLogout }) => (
+  <Menu
+    anchorEl={anchorEl}
+    open={open}
+    onClose={onClose}
+    anchorOrigin={{
+      vertical: 'bottom',
+      horizontal: 'right',
+    }}
+    transformOrigin={{
+      vertical: 'top',
+      horizontal: 'right',
+    }}
+  >
+    <MenuItem onClick={onProfile}>
+      Mi Perfil
+    </MenuItem>
+    <MenuItem onClick={onLogout}>
+      Cerrar Sesión
+    </MenuItem>
+  </Menu>
+))
 
 function App() {
   const [session, setSession] = useState(null)
@@ -66,9 +134,11 @@ function App() {
       setSession(session)
     })
 
-    supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session)
     })
+
+    return () => subscription?.unsubscribe()
   }, [])
 
   const handleMenu = (event) => {
@@ -81,6 +151,11 @@ function App() {
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
+    handleClose()
+  }
+
+  const handleProfileClick = () => {
+    setTab(4)
     handleClose()
   }
 
@@ -113,9 +188,9 @@ function App() {
       }}>
         <AppBar position="static" elevation={0}>
           <Toolbar>
-            <Typography color="inherit" variant="h6" sx={{ flexGrow: 1, fontWeight: 600 }}>
-              BikeShare
-            </Typography>
+            <Box sx={{ flexGrow: 1 }}>
+              <Logo />
+            </Box>
             <IconButton
               color="inherit"
               onClick={handleMenu}
@@ -123,26 +198,13 @@ function App() {
             >
               <AccountCircleIcon />
             </IconButton>
-            <Menu
+            <UserMenu 
               anchorEl={anchorEl}
               open={open}
               onClose={handleClose}
-              anchorOrigin={{
-                vertical: 'bottom',
-                horizontal: 'right',
-              }}
-              transformOrigin={{
-                vertical: 'top',
-                horizontal: 'right',
-              }}
-            >
-              <MenuItem onClick={() => { setTab(4); handleClose(); }}>
-                Mi Perfil
-              </MenuItem>
-              <MenuItem onClick={handleLogout}>
-                Cerrar Sesión
-              </MenuItem>
-            </Menu>
+              onProfile={handleProfileClick}
+              onLogout={handleLogout}
+            />
           </Toolbar>
         </AppBar>
 
@@ -163,22 +225,10 @@ function App() {
             overflow: 'hidden',
             boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
           }}>
-            <Tabs 
+            <NavigationTabs 
               value={tab} 
               onChange={(e, newValue) => setTab(newValue)}
-              sx={{ 
-                borderBottom: 1, 
-                borderColor: 'divider',
-                bgcolor: 'background.paper',
-                px: 2
-              }}
-            >
-              <Tab label="Mapa" />
-              <Tab label="Mis Reservas" />
-              <Tab label="Viajes Activos" />
-              <Tab label="Historial" />
-              <Tab label="Mi Perfil" sx={{ ml: 'auto' }} />
-            </Tabs>
+            />
             <Box sx={{ 
               flex: 1,
               overflow: 'auto',
