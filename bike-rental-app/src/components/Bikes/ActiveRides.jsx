@@ -1,75 +1,79 @@
-import { useState, useEffect } from 'react'
-import { 
+import { useState, useEffect, useRef } from 'react';
+import {
   Box, Card, CardContent, Typography, Button, CircularProgress, Alert,
   Paper, Avatar, Chip, Dialog, DialogTitle, DialogContent, DialogActions,
-  FormControl, InputLabel, Select, MenuItem 
-} from '@mui/material'
-import { supabase } from '../../services/supabase'
-import { GoogleMap, useLoadScript, Marker } from '@react-google-maps/api'
-import InfoIcon from '@mui/icons-material/Info'
-import DirectionsBikeIcon from '@mui/icons-material/DirectionsBike'
-import LocationOnIcon from '@mui/icons-material/LocationOn'
-import TimerIcon from '@mui/icons-material/Timer'
+  FormControl, InputLabel, Select, MenuItem
+} from '@mui/material';
+import { supabase } from '../../services/supabase';
+import { GoogleMap, useLoadScript, Marker, DirectionsRenderer } from '@react-google-maps/api';
+import InfoIcon from '@mui/icons-material/Info';
+import DirectionsBikeIcon from '@mui/icons-material/DirectionsBike';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
+import TimerIcon from '@mui/icons-material/Timer';
 
 const TRIP_STATUS = {
   RESERVED: 'reserved',
   ACTIVE: 'active',
   COMPLETED: 'completed'
-}
+};
 
 const BIKE_STATUS = {
   AVAILABLE: 'available',
   IN_USE: 'in_use',
   RESERVED: 'reserved'
-}
+};
 
 const ActiveRides = () => {
-  const [activeTrips, setActiveTrips] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
-  const [returnDialog, setReturnDialog] = useState(false)
-  const [selectedLocation, setSelectedLocation] = useState('')
-  const [locations, setLocations] = useState([])
-  const [selectedTrip, setSelectedTrip] = useState(null)
+  const [activeTrips, setActiveTrips] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [returnDialog, setReturnDialog] = useState(false);
+  const [selectedLocation, setSelectedLocation] = useState('');
+  const [locations, setLocations] = useState([]);
+  const [selectedTrip, setSelectedTrip] = useState(null);
+  const [directions, setDirections] = useState(null);
+  const [currentPosition, setCurrentPosition] = useState(null);
+  const [simulationDialog, setSimulationDialog] = useState(false);
+  const intervalRef = useRef(null);
 
   const { isLoaded: mapsLoaded } = useLoadScript({
     googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY
-  })
+  });
 
   useEffect(() => {
-    fetchActiveTrips()
-    fetchLocations()
+    fetchActiveTrips();
+    fetchLocations();
 
     const subscription = supabase
       .channel('trip-changes')
-      .on('postgres_changes', 
-        { event: '*', schema: 'public', table: 'trip' }, 
+      .on('postgres_changes',
+        { event: '*', schema: 'public', table: 'trip' },
         () => fetchActiveTrips()
       )
-      .subscribe()
+      .subscribe();
 
-    return () => subscription.unsubscribe()
-  }, [])
+    return () => subscription.unsubscribe();
+  }, []);
 
   const fetchLocations = async () => {
     try {
       const { data, error } = await supabase
         .from('location')
-        .select('id, location_name, latitude, longitude')
+        .select('id, location_name, latitude, longitude');
 
-      if (error) throw error
-      setLocations(data || [])
+      if (error) throw error;
+      setLocations(data || []);
     } catch (err) {
-      console.error('Error fetching locations:', err)
-      setError('Error al cargar las ubicaciones')
+      console.error('Error fetching locations:', err);
+      setError('Error al cargar las ubicaciones');
     }
-  }
+  };
 
   const fetchActiveTrips = async () => {
     try {
-      setLoading(true)
-      const { data: { user } } = await supabase.auth.getUser()
-      
+      setLoading(true);
+      const { data: { user } } = await supabase.auth.getUser();
+
       const { data, error } = await supabase
         .from('trip')
         .select(`
@@ -90,26 +94,26 @@ const ActiveRides = () => {
           )
         `)
         .eq('user_id', user.id)
-        .eq('status', TRIP_STATUS.ACTIVE)
+        .eq('status', TRIP_STATUS.ACTIVE);
 
-      if (error) throw error
-      setActiveTrips(data || [])
+      if (error) throw error;
+      setActiveTrips(data || []);
     } catch (err) {
-      console.error('Error fetching active trips:', err)
-      setError(err.message)
+      console.error('Error fetching active trips:', err);
+      setError(err.message);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const handleFinishTrip = async (trip) => {
-    setSelectedTrip(trip)
-    setReturnDialog(true)
-  }
+    setSelectedTrip(trip);
+    setReturnDialog(true);
+  };
 
   const confirmReturn = async () => {
     try {
-      if (!selectedLocation || !selectedTrip) return
+      if (!selectedLocation || !selectedTrip) return;
 
       // Update trip status
       const { error: tripError } = await supabase
@@ -119,9 +123,9 @@ const ActiveRides = () => {
           end_time: new Date().toISOString(),
           end_location_id: selectedLocation
         })
-        .eq('id', selectedTrip.id)
+        .eq('id', selectedTrip.id);
 
-      if (tripError) throw tripError
+      if (tripError) throw tripError;
 
       // Update bike status
       const { error: bikeError } = await supabase
@@ -130,27 +134,85 @@ const ActiveRides = () => {
           status: BIKE_STATUS.AVAILABLE,
           current_location_id: selectedLocation
         })
-        .eq('id', selectedTrip.bike_id)
+        .eq('id', selectedTrip.bike_id);
 
-      if (bikeError) throw bikeError
+      if (bikeError) throw bikeError;
 
-      setReturnDialog(false)
-      setSelectedLocation('')
-      setSelectedTrip(null)
-      alert('¡Viaje finalizado correctamente!')
-      await fetchActiveTrips()
+      setReturnDialog(false);
+      setSelectedLocation('');
+      setSelectedTrip(null);
+      alert('¡Viaje finalizado correctamente!');
+      await fetchActiveTrips();
     } catch (err) {
-      console.error('Error finishing trip:', err)
-      setError('Error al finalizar el viaje: ' + err.message)
+      console.error('Error finishing trip:', err);
+      setError('Error al finalizar el viaje: ' + err.message);
     }
-  }
+  };
+
+  const startTripSimulation = (startLocation, endLocation) => {
+    const directionsService = new window.google.maps.DirectionsService();
+    directionsService.route(
+      {
+        origin: startLocation,
+        destination: endLocation,
+        travelMode: window.google.maps.TravelMode.BICYCLING
+      },
+      (result, status) => {
+        if (status === window.google.maps.DirectionsStatus.OK) {
+          setDirections(result);
+          const steps = result.routes[0].legs[0].steps;
+          let stepIndex = 0;
+          let latLngIndex = 0;
+
+          intervalRef.current = setInterval(() => {
+            if (latLngIndex < steps[stepIndex].lat_lngs.length) {
+              setCurrentPosition(steps[stepIndex].lat_lngs[latLngIndex]);
+              latLngIndex++;
+            } else {
+              stepIndex++;
+              latLngIndex = 0;
+              if (stepIndex >= steps.length) {
+                clearInterval(intervalRef.current);
+              }
+            }
+          }, 1000);
+        } else {
+          console.error(`error fetching directions ${result}`);
+        }
+      }
+    );
+  };
+
+  const handleOpenSimulation = (trip) => {
+    setSelectedTrip(trip);
+    setSimulationDialog(true);
+    const startLocation = {
+      lat: Number(trip.start_location.latitude),
+      lng: Number(trip.start_location.longitude)
+    };
+    const endLocation = locations.find(loc => loc.id === trip.start_location_id);
+    if (endLocation) {
+      startTripSimulation(startLocation, {
+        lat: Number(endLocation.latitude),
+        lng: Number(endLocation.longitude)
+      });
+    }
+  };
+
+  const handleCloseSimulation = () => {
+    setSimulationDialog(false);
+    setSelectedTrip(null);
+    setDirections(null);
+    setCurrentPosition(null);
+    clearInterval(intervalRef.current);
+  };
 
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" height="100%">
         <CircularProgress />
       </Box>
-    )
+    );
   }
 
   if (error) {
@@ -158,18 +220,18 @@ const ActiveRides = () => {
       <Alert severity="error" sx={{ m: 2 }}>
         {error}
       </Alert>
-    )
+    );
   }
 
   return (
     <>
       <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-        <Paper 
-          elevation={0} 
-          sx={{ 
-            p: 2, 
-            mb: 3, 
-            bgcolor: 'primary.main', 
+        <Paper
+          elevation={0}
+          sx={{
+            p: 2,
+            mb: 3,
+            bgcolor: 'primary.main',
             color: 'white',
             borderRadius: 2,
             display: 'flex',
@@ -185,22 +247,22 @@ const ActiveRides = () => {
               Viajes Activos
             </Typography>
           </Box>
-          <Chip 
+          <Chip
             icon={<DirectionsBikeIcon />}
             label={`${activeTrips.length} ${activeTrips.length === 1 ? 'viaje' : 'viajes'}`}
-            sx={{ 
-              bgcolor: 'white', 
+            sx={{
+              bgcolor: 'white',
               color: 'primary.main',
               '& .MuiChip-icon': { color: 'primary.main' }
             }}
           />
         </Paper>
-        
+
         {activeTrips.length === 0 ? (
-          <Card 
+          <Card
             elevation={0}
-            sx={{ 
-              p: 4, 
+            sx={{
+              p: 4,
               textAlign: 'center',
               bgcolor: 'primary.light',
               color: 'white',
@@ -225,10 +287,10 @@ const ActiveRides = () => {
         ) : (
           <Box sx={{ flex: 1, overflow: 'auto' }}>
             {activeTrips.map(trip => (
-              <Card 
-                key={trip.id} 
+              <Card
+                key={trip.id}
                 elevation={0}
-                sx={{ 
+                sx={{
                   mb: 2,
                   border: '1px solid',
                   borderColor: 'divider',
@@ -257,11 +319,11 @@ const ActiveRides = () => {
                         />
                       </Typography>
                       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, mt: 0.5 }}>
-                        <Typography 
-                          variant="body2" 
-                          sx={{ 
-                            display: 'flex', 
-                            alignItems: 'center', 
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            display: 'flex',
+                            alignItems: 'center',
                             gap: 1,
                             color: 'text.secondary'
                           }}
@@ -287,7 +349,7 @@ const ActiveRides = () => {
                     </Box>
                   </Box>
 
-                  <Button 
+                  <Button
                     variant="contained"
                     fullWidth
                     onClick={() => handleFinishTrip(trip)}
@@ -296,6 +358,15 @@ const ActiveRides = () => {
                   >
                     Finalizar Viaje
                   </Button>
+                  <Button
+                    variant="outlined"
+                    fullWidth
+                    onClick={() => handleOpenSimulation(trip)}
+                    startIcon={<DirectionsBikeIcon />}
+                    sx={{ mt: 1, py: 1 }}
+                  >
+                    Ver Simulación
+                  </Button>
                 </CardContent>
               </Card>
             ))}
@@ -303,12 +374,12 @@ const ActiveRides = () => {
         )}
       </Box>
 
-      <Dialog 
-        open={returnDialog} 
+      <Dialog
+        open={returnDialog}
         onClose={() => {
-          setReturnDialog(false)
-          setSelectedLocation('')
-          setSelectedTrip(null)
+          setReturnDialog(false);
+          setSelectedLocation('');
+          setSelectedTrip(null);
         }}
         maxWidth="md"
         fullWidth
@@ -334,9 +405,9 @@ const ActiveRides = () => {
             <Box sx={{ height: 300, width: '100%', borderRadius: 1, overflow: 'hidden' }}>
               <GoogleMap
                 mapContainerStyle={{ width: '100%', height: '100%' }}
-                center={{ 
-                  lat: Number(selectedTrip.start_location.latitude), 
-                  lng: Number(selectedTrip.start_location.longitude) 
+                center={{
+                  lat: Number(selectedTrip.start_location.latitude),
+                  lng: Number(selectedTrip.start_location.longitude)
                 }}
                 zoom={13}
                 options={{
@@ -369,23 +440,45 @@ const ActiveRides = () => {
                           scaledSize: new window.google.maps.Size(30, 30)
                         }}
                       />
-                    )
+                    );
                   }
-                  return null
+                  return null;
                 })}
+                {directions && (
+                  <DirectionsRenderer
+                    directions={directions}
+                    options={{
+                      suppressMarkers: true,
+                      polylineOptions: {
+                        strokeColor: '#ff0000',
+                        strokeOpacity: 0.7,
+                        strokeWeight: 5
+                      }
+                    }}
+                  />
+                )}
+                {currentPosition && (
+                  <Marker
+                    position={currentPosition}
+                    icon={{
+                      url: '/bike-icon.png',
+                      scaledSize: new window.google.maps.Size(30, 30)
+                    }}
+                  />
+                )}
               </GoogleMap>
             </Box>
           )}
         </DialogContent>
         <DialogActions>
           <Button onClick={() => {
-            setReturnDialog(false)
-            setSelectedLocation('')
-            setSelectedTrip(null)
+            setReturnDialog(false);
+            setSelectedLocation('');
+            setSelectedTrip(null);
           }}>
             Cancelar
           </Button>
-          <Button 
+          <Button
             onClick={confirmReturn}
             variant="contained"
             disabled={!selectedLocation}
@@ -394,8 +487,74 @@ const ActiveRides = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </>
-  )
-}
 
-export default ActiveRides
+      <Dialog
+        open={simulationDialog}
+        onClose={handleCloseSimulation}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>Simulación de Viaje</DialogTitle>
+        <DialogContent>
+          {mapsLoaded && selectedTrip?.start_location && (
+            <Box sx={{ height: 400, width: '100%', borderRadius: 1, overflow: 'hidden' }}>
+              <GoogleMap
+                mapContainerStyle={{ width: '100%', height: '100%' }}
+                center={currentPosition || {
+                  lat: Number(selectedTrip.start_location.latitude),
+                  lng: Number(selectedTrip.start_location.longitude)
+                }}
+                zoom={13}
+                options={{
+                  disableDefaultUI: true,
+                  zoomControl: true,
+                  scrollwheel: false
+                }}
+              >
+                <Marker
+                  position={{
+                    lat: Number(selectedTrip.start_location.latitude),
+                    lng: Number(selectedTrip.start_location.longitude)
+                  }}
+                  icon={{
+                    url: '/bike-station-blue.png',
+                    scaledSize: new window.google.maps.Size(30, 30)
+                  }}
+                />
+                {directions && (
+                  <DirectionsRenderer
+                    directions={directions}
+                    options={{
+                      suppressMarkers: true,
+                      polylineOptions: {
+                        strokeColor: '#ff0000',
+                        strokeOpacity: 0.7,
+                        strokeWeight: 5
+                      }
+                    }}
+                  />
+                )}
+                {currentPosition && (
+                  <Marker
+                    position={currentPosition}
+                    icon={{
+                      url: '/bike-icon.png',
+                      scaledSize: new window.google.maps.Size(30, 30)
+                    }}
+                  />
+                )}
+              </GoogleMap>
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseSimulation}>
+            Cerrar
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </>
+  );
+};
+
+export default ActiveRides;

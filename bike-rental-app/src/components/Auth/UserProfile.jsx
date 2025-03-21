@@ -7,6 +7,7 @@ import {
 import PersonIcon from '@mui/icons-material/Person';
 import EmailIcon from '@mui/icons-material/Email';
 import BadgeIcon from '@mui/icons-material/Badge';
+import PhotoCamera from '@mui/icons-material/PhotoCamera';
 
 const UserProfile = () => {
   const [loading, setLoading] = useState(true);
@@ -23,6 +24,7 @@ const UserProfile = () => {
     name: '',
     dni: ''
   });
+  const [profilePicture, setProfilePicture] = useState(null);
 
   useEffect(() => {
     fetchProfile();
@@ -32,7 +34,7 @@ const UserProfile = () => {
     try {
       setLoading(true);
       const { data: { user } } = await supabase.auth.getUser();
-      
+
       if (!user) throw new Error('No user logged in');
 
       const { data, error } = await supabase
@@ -50,14 +52,13 @@ const UserProfile = () => {
         profile_picture: data.profile_picture,
         rol: data.rol
       });
-      
+
       setFormData({
         name: data.name || '',
         dni: data.dni || ''
       });
 
     } catch (err) {
-      console.error('Error fetching profile:', err);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -69,12 +70,33 @@ const UserProfile = () => {
     try {
       setLoading(true);
       const { data: { user } } = await supabase.auth.getUser();
+      let profilePictureUrl = profile.profile_picture;
+
+      if (profilePicture) {
+        const fileExt = profilePicture.name.split('.').pop();
+        const fileName = `${user.id}_${Date.now()}.${fileExt}`;
+        const filePath = `profiles/${fileName}`;
+
+        const { error: uploadError } = await supabase
+          .storage
+          .from('bikeshare')
+          .upload(filePath, profilePicture, { upsert: false });
+
+        if (uploadError) throw uploadError;
+
+        const { data } = supabase.storage
+          .from('bikeshare')
+          .getPublicUrl(filePath);
+
+        profilePictureUrl = data.publicUrl;
+      }
 
       const { error } = await supabase
         .from('user')
         .update({
           name: formData.name,
-          dni: formData.dni
+          dni: formData.dni,
+          profile_picture: profilePictureUrl
         })
         .eq('id', user.id);
 
@@ -83,17 +105,23 @@ const UserProfile = () => {
       setProfile(prev => ({
         ...prev,
         name: formData.name,
-        dni: formData.dni
+        dni: formData.dni,
+        profile_picture: profilePictureUrl
       }));
-      
+
       setEditing(false);
       alert('Perfil actualizado correctamente');
 
     } catch (err) {
-      console.error('Error updating profile:', err);
       setError(err.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleProfilePictureChange = (e) => {
+    if (e.target.files && e.target.files[0]) {
+      setProfilePicture(e.target.files[0]);
     }
   };
 
@@ -111,38 +139,38 @@ const UserProfile = () => {
 
   return (
     <Box sx={{ maxWidth: 600, mx: 'auto', p: 2 }}>
-      <Paper elevation={2} sx={{ p: 3, borderRadius: 2 }}>
+      <Paper elevation={3} sx={{ p: 4, borderRadius: 3 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
           <Avatar
             src={profile.profile_picture}
             sx={{ 
-              width: 80, 
-              height: 80, 
+              width: 100, 
+              height: 100, 
               bgcolor: 'primary.main',
-              fontSize: '2rem'
+              fontSize: '2.5rem'
             }}
           >
             {!profile.profile_picture && (profile.name?.charAt(0) || <PersonIcon fontSize="large" />)}
           </Avatar>
-          <Box sx={{ ml: 2 }}>
-            <Typography variant="h5" sx={{ fontWeight: 600 }}>
+          <Box sx={{ ml: 3 }}>
+            <Typography variant="h4" sx={{ fontWeight: 700 }}>
               {profile.name || 'Usuario'}
             </Typography>
-            <Typography variant="body1" color="text.secondary">
-              <EmailIcon sx={{ fontSize: 16, mr: 0.5, verticalAlign: 'text-bottom' }} />
+            <Typography variant="body1" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
+              <EmailIcon sx={{ fontSize: 18, mr: 1 }} />
               {profile.email}
             </Typography>
             <Typography 
               variant="body2" 
               sx={{ 
-                mt: 0.5,
-                color: 'primary.main',
+                mt: 1,
                 bgcolor: 'primary.light',
-                px: 1,
+                px: 1.5,
                 py: 0.5,
                 borderRadius: 1,
                 display: 'inline-block',
-                color: 'white'
+                color: 'white',
+                fontWeight: 500
               }}
             >
               {profile.rol}
@@ -159,21 +187,32 @@ const UserProfile = () => {
               label="Nombre"
               value={formData.name}
               onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-              sx={{ mb: 2 }}
+              sx={{ mb: 3 }}
             />
             <TextField
               fullWidth
               label="DNI"
               value={formData.dni}
               onChange={(e) => setFormData(prev => ({ ...prev, dni: e.target.value }))}
-              sx={{ mb: 2 }}
+              sx={{ mb: 3 }}
               InputProps={{
                 startAdornment: (
                   <BadgeIcon sx={{ mr: 1, color: 'text.secondary' }} />
                 ),
               }}
             />
-            <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+              <Button variant="contained" component="label" startIcon={<PhotoCamera />}>
+                Subir Foto
+                <input type="file" hidden accept="image/*" onChange={handleProfilePictureChange} />
+              </Button>
+              {profilePicture && (
+                <Typography variant="body2" color="text.secondary" sx={{ ml: 2 }}>
+                  {profilePicture.name}
+                </Typography>
+              )}
+            </Box>
+            <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
               <Button 
                 onClick={() => setEditing(false)}
                 sx={{ color: 'text.secondary' }}
@@ -191,7 +230,7 @@ const UserProfile = () => {
           </Box>
         ) : (
           <Box>
-            <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+            <Typography variant="h6" color="text.secondary" gutterBottom>
               Información Personal
             </Typography>
             <Box sx={{ mb: 2 }}>

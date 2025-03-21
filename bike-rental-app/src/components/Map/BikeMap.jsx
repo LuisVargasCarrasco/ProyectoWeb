@@ -45,13 +45,13 @@ const BikeMap = () => {
 
   useEffect(() => {
     fetchLocationsWithBikes();
-    
+
     const subscription = supabase
       .channel('bike-channel')
-      .on('postgres_changes', { 
-        event: '*', 
-        schema: 'public', 
-        table: 'bike' 
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'bike'
       }, fetchLocationsWithBikes)
       .subscribe();
 
@@ -90,7 +90,7 @@ const BikeMap = () => {
     const R = 6371; // Radius of the Earth in km
     const dLat = (loc2.lat - loc1.lat) * (Math.PI / 180);
     const dLng = (loc2.lng - loc1.lng) * (Math.PI / 180);
-    const a = 
+    const a =
       Math.sin(dLat / 2) * Math.sin(dLat / 2) +
       Math.cos(loc1.lat * (Math.PI / 180)) * Math.cos(loc2.lat * (Math.PI / 180)) *
       Math.sin(dLng / 2) * Math.sin(dLng / 2);
@@ -110,7 +110,7 @@ const BikeMap = () => {
         .eq('id', bikeId);
 
       if (error) throw error;
-      
+
       fetchLocationsWithBikes();
       setSelectedLocation(null);
     } catch (err) {
@@ -138,8 +138,8 @@ const BikeMap = () => {
 
   if (loadError) {
     return (
-      <Alert 
-        severity="error" 
+      <Alert
+        severity="error"
         sx={{ m: 2 }}
       >
         Error al cargar el mapa: {loadError.message}
@@ -165,8 +165,8 @@ const BikeMap = () => {
 
   if (error) {
     return (
-      <Alert 
-        severity="error" 
+      <Alert
+        severity="error"
         sx={{ m: 2 }}
       >
         {error}
@@ -175,18 +175,18 @@ const BikeMap = () => {
   }
 
   return (
-    <Box sx={{ 
-      display: 'flex', 
+    <Box sx={{
+      display: 'flex',
       flexDirection: 'column',
       height: '100%',
       gap: 2
     }}>
-      <Paper 
-        elevation={2} 
-        sx={{ 
+      <Paper
+        elevation={2}
+        sx={{
           p: 2,
-          display: 'flex', 
-          alignItems: 'center', 
+          display: 'flex',
+          alignItems: 'center',
           justifyContent: 'space-between',
         }}
       >
@@ -204,22 +204,22 @@ const BikeMap = () => {
         <Typography variant="h5" sx={{ fontWeight: 600 }}>
           Estaciones de Bicicletas
         </Typography>
-        <Chip 
-          icon={<PedalBikeIcon />} 
-          label={`${locations.reduce((acc, loc) => 
+        <Chip
+          icon={<PedalBikeIcon />}
+          label={`${locations.reduce((acc, loc) =>
             acc + loc.bikes.filter(b => b.status === 'available').length, 0
           )} bicicletas disponibles`}
           color="primary"
-          sx={{ 
+          sx={{
             px: 1,
             '& .MuiChip-label': { fontWeight: 500 }
           }}
         />
       </Paper>
-      
-      <Paper 
-        elevation={3} 
-        sx={{ 
+
+      <Paper
+        elevation={3}
+        sx={{
           flex: 1,
           minHeight: 0,
           overflow: 'hidden',
@@ -253,39 +253,39 @@ const BikeMap = () => {
                   : '/bike-station-red.png',
                 scaledSize: new window.google.maps.Size(40, 40)
               }}
-            />  
+            />
           ))}
           {selectedLocation && (
             <InfoWindow
-              position={{ 
-                lat: selectedLocation.latitude, 
-                lng: selectedLocation.longitude 
+              position={{
+                lat: selectedLocation.latitude,
+                lng: selectedLocation.longitude
               }}
               onCloseClick={() => setSelectedLocation(null)}
             >
-              <Box sx={{ 
+              <Box sx={{
                 p: 1,
                 minWidth: 200,
                 '& .MuiTypography-root': { mb: 1 }
               }}>
-                <Typography 
-                  variant="subtitle1" 
-                  sx={{ 
+                <Typography
+                  variant="subtitle1"
+                  sx={{
                     fontWeight: 600,
                     color: 'primary.main'
                   }}
                 >
                   {selectedLocation.location_name}
                 </Typography>
-                <Typography 
-                  variant="body2" 
+                <Typography
+                  variant="body2"
                   sx={{ color: 'text.secondary' }}
                 >
                   {selectedLocation.address}
                 </Typography>
-                <Typography 
-                  variant="body2" 
-                  sx={{ 
+                <Typography
+                  variant="body2"
+                  sx={{
                     bgcolor: 'primary.light',
                     color: 'white',
                     p: 1,
@@ -305,7 +305,7 @@ const BikeMap = () => {
                     onClick={() => handleReserveBike(
                       selectedLocation.bikes.find(b => b.status === 'available').id
                     )}
-                    sx={{ 
+                    sx={{
                       mt: 2,
                       width: '100%',
                       boxShadow: 2

@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
-import { 
+import {
   Box, Card, CardContent, Typography, Button, CircularProgress, Alert,
-  Dialog, DialogTitle, DialogContent, DialogActions, Select, MenuItem, 
-  FormControl, InputLabel, Paper, Avatar, Chip 
+  Dialog, DialogTitle, DialogContent, DialogActions, Select, MenuItem,
+  FormControl, InputLabel, Paper, Avatar, Chip
 } from '@mui/material'
 import { supabase } from '../../services/supabase'
 import InfoIcon from '@mui/icons-material/Info'
@@ -48,7 +48,7 @@ const ReservationList = () => {
     try {
       setLoading(true)
       const { data: { user } } = await supabase.auth.getUser()
-      
+
       const { data, error } = await supabase
         .from('bike')
         .select(`
@@ -73,15 +73,15 @@ const ReservationList = () => {
   const handleUnlock = async (bikeId) => {
     try {
       const { data: { user } } = await supabase.auth.getUser()
-      
+
       const { data: bike } = await supabase
         .from('bike')
         .select('current_location_id')
         .eq('id', bikeId)
         .single()
-  
+
       const now = new Date().toISOString()
-  
+
       // First create the trip
       const { error: tripError } = await supabase
         .from('trip')
@@ -92,20 +92,20 @@ const ReservationList = () => {
           start_time: now,
           status: TRIP_STATUS.ACTIVE
         })
-  
+
       if (tripError) throw tripError
-  
+
       // Update bike status but keep the current_location_id
       const { error: bikeError } = await supabase
         .from('bike')
-        .update({ 
+        .update({
           status: 'in_use'
           // Removed current_location_id: null
         })
         .eq('id', bikeId)
-  
+
       if (bikeError) throw bikeError
-      
+
       alert('¡Bicicleta desbloqueada! Disfruta tu viaje')
       await fetchReservedBikes()
     } catch (err) {
@@ -113,7 +113,7 @@ const ReservationList = () => {
       setError('Error al desbloquear la bicicleta: ' + err.message)
     }
   }
-  
+
   const handleReturn = async () => {
     if (!selectedLocation || !selectedBikeId) return
 
@@ -123,7 +123,7 @@ const ReservationList = () => {
       // Update trip status and end time
       const { error: tripError } = await supabase
         .from('trip')
-        .update({ 
+        .update({
           status: TRIP_STATUS.COMPLETED,
           end_time: now,
           end_location_id: selectedLocation
@@ -136,9 +136,9 @@ const ReservationList = () => {
       // Update bike status and location
       const { error: bikeError } = await supabase
         .from('bike')
-        .update({ 
+        .update({
           status: 'available',
-          current_location_id: selectedLocation 
+          current_location_id: selectedLocation
         })
         .eq('id', selectedBikeId)
 
@@ -174,12 +174,12 @@ const ReservationList = () => {
 
   return (
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <Paper 
-        elevation={0} 
-        sx={{ 
-          p: 2, 
-          mb: 3, 
-          bgcolor: 'primary.main', 
+      <Paper
+        elevation={0}
+        sx={{
+          p: 2,
+          mb: 3,
+          bgcolor: 'primary.main',
           color: 'white',
           borderRadius: 2,
           display: 'flex',
@@ -195,22 +195,22 @@ const ReservationList = () => {
             Mis Reservas
           </Typography>
         </Box>
-        <Chip 
+        <Chip
           icon={<DirectionsBikeIcon />}
           label={`${reservedBikes.length} ${reservedBikes.length === 1 ? 'reserva' : 'reservas'}`}
-          sx={{ 
-            bgcolor: 'white', 
+          sx={{
+            bgcolor: 'white',
             color: 'primary.main',
             '& .MuiChip-icon': { color: 'primary.main' }
           }}
         />
       </Paper>
-      
+
       {reservedBikes.length === 0 ? (
-        <Card 
+        <Card
           elevation={0}
-          sx={{ 
-            p: 4, 
+          sx={{
+            p: 4,
             textAlign: 'center',
             bgcolor: 'primary.light',
             color: 'white',
@@ -235,10 +235,10 @@ const ReservationList = () => {
       ) : (
         <Box sx={{ flex: 1, overflow: 'auto' }}>
           {reservedBikes.map(bike => (
-            <Card 
-              key={bike.id} 
+            <Card
+              key={bike.id}
               elevation={0}
-              sx={{ 
+              sx={{
                 mb: 2,
                 border: '1px solid',
                 borderColor: 'divider',
@@ -286,7 +286,7 @@ const ReservationList = () => {
                 </Box>
 
                 <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
-                  <Button 
+                  <Button
                     variant="contained"
                     fullWidth
                     onClick={() => handleUnlock(bike.id)}
@@ -294,7 +294,7 @@ const ReservationList = () => {
                   >
                     Desbloquear
                   </Button>
-                  <Button 
+                  <Button
                     variant="outlined"
                     onClick={() => {
                       setSelectedBikeId(bike.id)
@@ -311,8 +311,8 @@ const ReservationList = () => {
         </Box>
       )}
 
-      <Dialog 
-        open={returnDialog} 
+      <Dialog
+        open={returnDialog}
         onClose={() => {
           setReturnDialog(false)
           setSelectedLocation('')
@@ -346,7 +346,7 @@ const ReservationList = () => {
           }}>
             Cancelar
           </Button>
-          <Button 
+          <Button
             onClick={handleReturn}
             variant="contained"
             disabled={!selectedLocation}

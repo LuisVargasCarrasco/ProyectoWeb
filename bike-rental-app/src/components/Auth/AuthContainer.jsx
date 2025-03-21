@@ -9,8 +9,8 @@ const AuthContainer = () => {
     setIsLogin(!isLogin);
   };
 
-  return isLogin ? 
-    <LoginForm onToggleForm={toggleForm} /> : 
+  return isLogin ?
+    <LoginForm onToggleForm={toggleForm} /> :
     <RegisterForm onToggleForm={toggleForm} />;
 };
 

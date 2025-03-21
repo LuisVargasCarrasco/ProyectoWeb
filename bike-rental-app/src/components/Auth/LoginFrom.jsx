@@ -38,10 +38,10 @@ const LoginForm = () => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
     >
-      <Box 
-        component="form" 
-        onSubmit={handleSubmit} 
-        sx={{ 
+      <Box
+        component="form"
+        onSubmit={handleSubmit}
+        sx={{
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
@@ -64,11 +64,11 @@ const LoginForm = () => {
             borderRadius: 2,
           }}
         />
-        
-        <Typography 
-          variant="h4" 
-          component="h1" 
-          sx={{ 
+
+        <Typography
+          variant="h4"
+          component="h1"
+          sx={{
             color: '#2E7D32',
             fontWeight: 700,
             textAlign: 'center',
@@ -143,7 +143,7 @@ const LoginForm = () => {
           type="submit"
           fullWidth
           variant="contained"
-          sx={{ 
+          sx={{
             py: 1.5,
             borderRadius: 2,
             fontSize: '1.1rem',

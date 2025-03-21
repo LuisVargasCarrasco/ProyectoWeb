@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { 
+import {
   Box, Card, CardContent, Typography, CircularProgress, Alert,
   Chip, Divider, IconButton, Collapse, Paper, Avatar
 } from '@mui/material'
@@ -38,11 +38,11 @@ const RideHistory = () => {
 
   const fetchHistory = async () => {
     try {
-      setLoading(true)
-      const { data: { user } } = await supabase.auth.getUser()
-      
-      if (!user) throw new Error('No user logged in')
-  
+      setLoading(true);
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (!user) throw new Error('No user logged in');
+
       const { data, error } = await supabase
         .from('trip')
         .select(`
@@ -53,6 +53,7 @@ const RideHistory = () => {
           status,
           start_location_id,
           end_location_id,
+          route,
           bike:bike_id (
             id,
             model_id
@@ -72,36 +73,36 @@ const RideHistory = () => {
         `)
         .eq('user_id', user.id)
         .eq('status', TRIP_STATUS.COMPLETED)
-        .order('start_time', { ascending: false })
-  
-      if (error) throw error
-      setTrips(data || [])
-  
+        .order('start_time', { ascending: false });
+
+      if (error) throw error;
+      setTrips(data || []);
+
     } catch (err) {
-      console.error('Error fetching history:', err)
-      setError(err.message)
+      console.error('Error fetching history:', err);
+      setError(err.message);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
-  
+  };
+
   const fetchDirections = useCallback(async (trip) => {
     if (!directions[trip.id] && window.google && trip.start_location && trip.end_location) {
       const directionsService = new window.google.maps.DirectionsService()
-      
+
       try {
         const result = await directionsService.route({
-          origin: { 
-            lat: Number(trip.start_location.latitude), 
-            lng: Number(trip.start_location.longitude) 
+          origin: {
+            lat: Number(trip.start_location.latitude),
+            lng: Number(trip.start_location.longitude)
           },
-          destination: { 
-            lat: Number(trip.end_location.latitude), 
-            lng: Number(trip.end_location.longitude) 
+          destination: {
+            lat: Number(trip.end_location.latitude),
+            lng: Number(trip.end_location.longitude)
           },
           travelMode: window.google.maps.TravelMode.BICYCLING,
         })
-        
+
         setDirections(prev => ({
           ...prev,
           [trip.id]: result
@@ -115,12 +116,12 @@ const RideHistory = () => {
   const handleExpandMap = useCallback((trip) => {
     setExpandedMap(prev => {
       const newState = { ...prev, [trip.id]: !prev[trip.id] }
-      
+
       // If expanding, fetch directions
       if (newState[trip.id]) {
         fetchDirections(trip)
       }
-      
+
       return newState
     })
   }, [fetchDirections])
@@ -143,12 +144,12 @@ const RideHistory = () => {
 
   return (
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <Paper 
-        elevation={0} 
-        sx={{ 
-          p: 2, 
-          mb: 3, 
-          bgcolor: 'primary.main', 
+      <Paper
+        elevation={0}
+        sx={{
+          p: 2,
+          mb: 3,
+          bgcolor: 'primary.main',
           color: 'white',
           borderRadius: 2,
           display: 'flex',
@@ -164,22 +165,22 @@ const RideHistory = () => {
             Historial de Viajes
           </Typography>
         </Box>
-        <Chip 
+        <Chip
           icon={<DirectionsBikeIcon />}
           label={`${trips.length} ${trips.length === 1 ? 'viaje' : 'viajes'}`}
-          sx={{ 
-            bgcolor: 'white', 
+          sx={{
+            bgcolor: 'white',
             color: 'primary.main',
             '& .MuiChip-icon': { color: 'primary.main' }
           }}
         />
       </Paper>
-      
+
       {trips.length === 0 ? (
-        <Card 
+        <Card
           elevation={0}
-          sx={{ 
-            p: 4, 
+          sx={{
+            p: 4,
             textAlign: 'center',
             bgcolor: 'primary.light',
             color: 'white',
@@ -204,10 +205,10 @@ const RideHistory = () => {
       ) : (
         <Box sx={{ flex: 1, overflow: 'auto' }}>
           {trips.map(trip => (
-            <Card 
-              key={trip.id} 
+            <Card
+              key={trip.id}
               elevation={0}
-              sx={{ 
+              sx={{
                 mb: 2,
                 border: '1px solid',
                 borderColor: 'divider',
@@ -238,16 +239,16 @@ const RideHistory = () => {
                       </Typography>
                     </Box>
                   </Box>
-                  <IconButton 
+                  <IconButton
                     onClick={() => handleExpandMap(trip)}
                     color="primary"
                   >
                     {expandedMap[trip.id] ? <ExpandLessIcon /> : <ExpandMoreIcon />}
                   </IconButton>
                 </Box>
-                
-                <Divider sx={{ my: 2 }}/>
-                
+
+                <Divider sx={{ my: 2 }} />
+
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                   <Box>
                     <Typography variant="subtitle2" color="textSecondary" sx={{ mb: 1 }}>
@@ -255,11 +256,11 @@ const RideHistory = () => {
                     </Typography>
                     {trip.start_location && (
                       <>
-                        <Typography 
-                          variant="body2" 
-                          sx={{ 
-                            display: 'flex', 
-                            alignItems: 'center', 
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            display: 'flex',
+                            alignItems: 'center',
                             gap: 1,
                             color: 'text.secondary',
                             mb: 0.5
@@ -268,11 +269,11 @@ const RideHistory = () => {
                           <LocationOnIcon fontSize="small" />
                           {trip.start_location.location_name}
                         </Typography>
-                        <Typography 
-                          variant="body2" 
-                          sx={{ 
-                            display: 'flex', 
-                            alignItems: 'center', 
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            display: 'flex',
+                            alignItems: 'center',
                             gap: 1,
                             color: 'text.secondary'
                           }}
@@ -290,11 +291,11 @@ const RideHistory = () => {
                     </Typography>
                     {trip.end_location && (
                       <>
-                        <Typography 
-                          variant="body2" 
-                          sx={{ 
-                            display: 'flex', 
-                            alignItems: 'center', 
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            display: 'flex',
+                            alignItems: 'center',
                             gap: 1,
                             color: 'text.secondary',
                             mb: 0.5
@@ -303,11 +304,11 @@ const RideHistory = () => {
                           <LocationOnIcon fontSize="small" />
                           {trip.end_location.location_name}
                         </Typography>
-                        <Typography 
-                          variant="body2" 
-                          sx={{ 
-                            display: 'flex', 
-                            alignItems: 'center', 
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            display: 'flex',
+                            alignItems: 'center',
                             gap: 1,
                             color: 'text.secondary'
                           }}
@@ -328,9 +329,9 @@ const RideHistory = () => {
                           width: '100%',
                           height: '100%'
                         }}
-                        center={{ 
-                          lat: Number(trip.start_location.latitude), 
-                          lng: Number(trip.start_location.longitude) 
+                        center={{
+                          lat: Number(trip.start_location.latitude),
+                          lng: Number(trip.start_location.longitude)
                         }}
                         zoom={13}
                         options={{
@@ -340,8 +341,8 @@ const RideHistory = () => {
                         }}
                       >
                         <Marker
-                          position={{ 
-                            lat: Number(trip.start_location.latitude), 
+                          position={{
+                            lat: Number(trip.start_location.latitude),
                             lng: Number(trip.start_location.longitude)
                           }}
                           icon={{
@@ -350,8 +351,8 @@ const RideHistory = () => {
                           }}
                         />
                         <Marker
-                          position={{ 
-                            lat: Number(trip.end_location.latitude), 
+                          position={{
+                            lat: Number(trip.end_location.latitude),
                             lng: Number(trip.end_location.longitude)
                           }}
                           icon={{

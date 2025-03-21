@@ -29,10 +29,10 @@ const RegisterForm = ({ onToggleForm }) => {
   };
 
   return (
-    <Box 
-      component="form" 
-      onSubmit={handleRegister} 
-      sx={{ 
+    <Box
+      component="form"
+      onSubmit={handleRegister}
+      sx={{
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
@@ -55,11 +55,11 @@ const RegisterForm = ({ onToggleForm }) => {
           mb: 2,
         }}
       />
-      
-      <Typography 
-        variant="h4" 
-        component="h1" 
-        sx={{ 
+
+      <Typography
+        variant="h4"
+        component="h1"
+        sx={{
           color: '#2E7D32',
           fontWeight: 700,
           mb: 3,
@@ -165,7 +165,7 @@ const RegisterForm = ({ onToggleForm }) => {
         type="submit"
         fullWidth
         variant="contained"
-        sx={{ 
+        sx={{
           mt: 2,
           py: 1.5,
           borderRadius: 2,
@@ -185,7 +185,7 @@ const RegisterForm = ({ onToggleForm }) => {
 
       <Button
         onClick={onToggleForm}
-        sx={{ 
+        sx={{
           color: '#2E7D32',
           textTransform: 'none',
           '&:hover': {

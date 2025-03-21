@@ -1,19 +1,19 @@
-import { useState, useEffect, memo } from 'react'
+import { useState, useEffect, memo } from 'react';
 import { 
   Container, Box, Tabs, Tab, AppBar, Toolbar, 
   Typography, IconButton, Menu, MenuItem 
-} from '@mui/material'
-import { ThemeProvider, createTheme } from '@mui/material/styles'
-import AccountCircleIcon from '@mui/icons-material/AccountCircle'
-import DirectionsBikeIcon from '@mui/icons-material/DirectionsBike'
-import BikeMap from './components/Map/BikeMap'
-import LoginForm from './components/Auth/LoginFrom'
-import ReservationList from './components/Bikes/ReservationList'
-import RideHistory from './components/Bikes/RideHistory'
-import ActiveRides from './components/Bikes/ActiveRides'
-import UserProfile from './components/Auth/UserProfile'
-import { supabase } from './services/supabase'
-import './App.css'
+} from '@mui/material';
+import { ThemeProvider, createTheme } from '@mui/material/styles';
+import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import DirectionsBikeIcon from '@mui/icons-material/DirectionsBike';
+import BikeMap from './components/Map/BikeMap';
+import LoginForm from './components/Auth/LoginFrom';
+import ReservationList from './components/Bikes/ReservationList';
+import RideHistory from './components/Bikes/RideHistory';
+import ActiveRides from './components/Bikes/ActiveRides';
+import UserProfile from './components/Auth/UserProfile';
+import { supabase } from './services/supabase';
+import './App.css';
 
 const theme = createTheme({
   palette: {
@@ -33,14 +33,33 @@ const theme = createTheme({
   shape: {
     borderRadius: 12
   },
+  typography: {
+    fontFamily: 'Roboto, Arial, sans-serif',
+    h5: {
+      fontWeight: 600,
+    },
+    body1: {
+      fontSize: '1rem',
+    },
+    body2: {
+      fontSize: '0.875rem',
+    },
+  },
   components: {
     MuiButton: {
       styleOverrides: {
         root: {
           textTransform: 'none',
-          fontWeight: 600
-        }
-      }
+          fontWeight: 600,
+          borderRadius: 8,
+          boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+          transition: 'transform 0.2s ease-in-out',
+          '&:hover': {
+            transform: 'translateY(-2px)',
+            boxShadow: '0 6px 12px rgba(0,0,0,0.15)',
+          },
+        },
+      },
     },
     MuiCard: {
       styleOverrides: {
@@ -48,13 +67,40 @@ const theme = createTheme({
           boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
           transition: 'transform 0.2s ease-in-out',
           '&:hover': {
-            transform: 'translateY(-2px)'
-          }
-        }
-      }
-    }
-  }
-})
+            transform: 'translateY(-2px)',
+          },
+        },
+      },
+    },
+    MuiAppBar: {
+      styleOverrides: {
+        root: {
+          backgroundColor: '#2E7D32',
+          boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+        },
+      },
+    },
+    MuiTabs: {
+      styleOverrides: {
+        root: {
+          borderBottom: '1px solid rgba(0, 0, 0, 0.12)',
+        },
+      },
+    },
+    MuiTab: {
+      styleOverrides: {
+        root: {
+          textTransform: 'none',
+          fontWeight: 600,
+          minWidth: 120,
+          '&.Mui-selected': {
+            color: '#2E7D32',
+          },
+        },
+      },
+    },
+  },
+});
 
 const Logo = memo(() => (
   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
@@ -79,7 +125,7 @@ const Logo = memo(() => (
       BikeShare
     </Typography>
   </Box>
-))
+));
 
 const NavigationTabs = memo(({ value, onChange }) => (
   <Tabs 
@@ -98,7 +144,7 @@ const NavigationTabs = memo(({ value, onChange }) => (
     <Tab label="Historial" />
     <Tab label="Mi Perfil" sx={{ ml: 'auto' }} />
   </Tabs>
-))
+));
 
 const UserMenu = memo(({ anchorEl, open, onClose, onProfile, onLogout }) => (
   <Menu
@@ -121,43 +167,43 @@ const UserMenu = memo(({ anchorEl, open, onClose, onProfile, onLogout }) => (
       Cerrar Sesión
     </MenuItem>
   </Menu>
-))
+));
 
 function App() {
-  const [session, setSession] = useState(null)
-  const [tab, setTab] = useState(0)
-  const [anchorEl, setAnchorEl] = useState(null)
-  const open = Boolean(anchorEl)
+  const [session, setSession] = useState(null);
+  const [tab, setTab] = useState(0);
+  const [anchorEl, setAnchorEl] = useState(null);
+  const open = Boolean(anchorEl);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session)
-    })
+      setSession(session);
+    });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session)
-    })
+      setSession(session);
+    });
 
-    return () => subscription?.unsubscribe()
-  }, [])
+    return () => subscription?.unsubscribe();
+  }, []);
 
   const handleMenu = (event) => {
-    setAnchorEl(event.currentTarget)
-  }
+    setAnchorEl(event.currentTarget);
+  };
 
   const handleClose = () => {
-    setAnchorEl(null)
-  }
+    setAnchorEl(null);
+  };
 
   const handleLogout = async () => {
-    await supabase.auth.signOut()
-    handleClose()
-  }
+    await supabase.auth.signOut();
+    handleClose();
+  };
 
   const handleProfileClick = () => {
-    setTab(4)
-    handleClose()
-  }
+    setTab(4);
+    handleClose();
+  };
 
   if (!session) {
     return (
@@ -175,7 +221,7 @@ function App() {
           </Container>
         </Box>
       </ThemeProvider>
-    )
+    );
   }
 
   return (
@@ -244,7 +290,7 @@ function App() {
         </Box>
       </Box>
     </ThemeProvider>
-  )
+  );
 }
 
-export default App
+export default App;
