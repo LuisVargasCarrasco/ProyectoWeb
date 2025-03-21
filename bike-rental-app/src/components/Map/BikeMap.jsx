@@ -1,6 +1,6 @@
 import { GoogleMap, useLoadScript, Marker, InfoWindow } from '@react-google-maps/api';
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { Box, Paper, Typography, CircularProgress, Chip, Alert, Button } from '@mui/material';
+import { Box, Paper, Typography, CircularProgress, Chip, Alert, Button, MenuItem, Select, FormControl, InputLabel } from '@mui/material';
 import { supabase } from '../../services/supabase';
 import PedalBikeIcon from '@mui/icons-material/PedalBike';
 import DirectionsBikeIcon from '@mui/icons-material/DirectionsBike';
@@ -12,6 +12,7 @@ const BikeMap = () => {
   const [selectedLocation, setSelectedLocation] = useState(null);
   const [userLocation, setUserLocation] = useState(null);
   const [nearestLocation, setNearestLocation] = useState(null);
+  const [filter, setFilter] = useState('distance');
 
   const center = useMemo(() => ({ lat: 41.3851, lng: 2.1734 }), []); // Plaza Catalunya
 
@@ -118,6 +119,23 @@ const BikeMap = () => {
     }
   };
 
+  const handleFilterChange = (event) => {
+    setFilter(event.target.value);
+  };
+
+  const filteredLocations = useMemo(() => {
+    if (filter === 'distance' && userLocation) {
+      return locations.sort((a, b) => {
+        const distanceA = getDistance(userLocation, { lat: a.latitude, lng: a.longitude });
+        const distanceB = getDistance(userLocation, { lat: b.latitude, lng: b.longitude });
+        return distanceA - distanceB;
+      });
+    } else if (filter === 'availability') {
+      return locations.filter(location => location.bikes.some(bike => bike.status === 'available'));
+    }
+    return locations;
+  }, [filter, locations, userLocation]);
+
   if (loadError) {
     return (
       <Alert 
@@ -172,6 +190,17 @@ const BikeMap = () => {
           justifyContent: 'space-between',
         }}
       >
+        <FormControl variant="outlined" sx={{ minWidth: 120 }}>
+          <InputLabel>Filtrar por</InputLabel>
+          <Select
+            value={filter}
+            onChange={handleFilterChange}
+            label="Filtrar por"
+          >
+            <MenuItem value="distance">Distancia</MenuItem>
+            <MenuItem value="availability">Disponibilidad</MenuItem>
+          </Select>
+        </FormControl>
         <Typography variant="h5" sx={{ fontWeight: 600 }}>
           Estaciones de Bicicletas
         </Typography>
@@ -213,7 +242,7 @@ const BikeMap = () => {
             fullscreenControl: true
           }}
         >
-          {locations.map((location) => (
+          {filteredLocations.map((location) => (
             <Marker
               key={location.id}
               position={{ lat: location.latitude, lng: location.longitude }}
