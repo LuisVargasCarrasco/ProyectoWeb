@@ -11,8 +11,7 @@ const BikeMap = () => {
   const [error, setError] = useState(null);
   const [selectedLocation, setSelectedLocation] = useState(null);
   const [userLocation, setUserLocation] = useState(null);
-  const [nearestLocation, setNearestLocation] = useState(null);
-  const [filter, setFilter] = useState('distance');
+  const [filter, setFilter] = useState('all');
 
   const center = useMemo(() => ({ lat: 41.3851, lng: 2.1734 }), []); // Plaza Catalunya
 
@@ -75,17 +74,6 @@ const BikeMap = () => {
     }
   }, []);
 
-  useEffect(() => {
-    if (userLocation && locations.length > 0) {
-      const nearest = locations.reduce((prev, curr) => {
-        const prevDistance = getDistance(userLocation, { lat: prev.latitude, lng: prev.longitude });
-        const currDistance = getDistance(userLocation, { lat: curr.latitude, lng: curr.longitude });
-        return prevDistance < currDistance ? prev : curr;
-      });
-      setNearestLocation(nearest);
-    }
-  }, [userLocation, locations]);
-
   const getDistance = (loc1, loc2) => {
     const R = 6371; // Radius of the Earth in km
     const dLat = (loc2.lat - loc1.lat) * (Math.PI / 180);
@@ -124,17 +112,20 @@ const BikeMap = () => {
   };
 
   const filteredLocations = useMemo(() => {
-    if (filter === 'distance' && userLocation) {
-      return locations.sort((a, b) => {
-        const distanceA = getDistance(userLocation, { lat: a.latitude, lng: a.longitude });
-        const distanceB = getDistance(userLocation, { lat: b.latitude, lng: b.longitude });
-        return distanceA - distanceB;
+    if (userLocation) {
+      return locations.filter(location => {
+        const distance = getDistance(userLocation, { lat: location.latitude, lng: location.longitude });
+        const hasAvailableBikes = location.bikes.some(bike => bike.status === 'available');
+        if (filter === 'distance') {
+          return distance <= 1; // Filtrar ubicaciones dentro de un radio de 1 km
+        } else if (filter === 'availability') {
+          return hasAvailableBikes;
+        }
+        return true;
       });
-    } else if (filter === 'availability') {
-      return locations.filter(location => location.bikes.some(bike => bike.status === 'available'));
     }
     return locations;
-  }, [filter, locations, userLocation]);
+  }, [locations, userLocation, filter]);
 
   if (loadError) {
     return (
@@ -197,6 +188,7 @@ const BikeMap = () => {
             onChange={handleFilterChange}
             label="Filtrar por"
           >
+            <MenuItem value="all">Todas</MenuItem>
             <MenuItem value="distance">Distancia</MenuItem>
             <MenuItem value="availability">Disponibilidad</MenuItem>
           </Select>

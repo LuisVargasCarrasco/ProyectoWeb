@@ -1,7 +1,7 @@
 import { useState, useEffect, memo } from 'react';
 import { 
   Container, Box, Tabs, Tab, AppBar, Toolbar, 
-  Typography, IconButton, Menu, MenuItem 
+  Typography, IconButton, Menu, MenuItem, Avatar 
 } from '@mui/material';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
@@ -173,19 +173,40 @@ function App() {
   const [session, setSession] = useState(null);
   const [tab, setTab] = useState(0);
   const [anchorEl, setAnchorEl] = useState(null);
+  const [profilePicture, setProfilePicture] = useState(null);
   const open = Boolean(anchorEl);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
+      if (session) {
+        fetchProfilePicture(session.user.id);
+      }
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
+      if (session) {
+        fetchProfilePicture(session.user.id);
+      }
     });
 
     return () => subscription?.unsubscribe();
   }, []);
+
+  const fetchProfilePicture = async (userId) => {
+    const { data, error } = await supabase
+      .from('user')
+      .select('profile_picture')
+      .eq('id', userId)
+      .single();
+
+    if (error) {
+      console.error('Error fetching profile picture:', error);
+    } else {
+      setProfilePicture(data.profile_picture);
+    }
+  };
 
   const handleMenu = (event) => {
     setAnchorEl(event.currentTarget);
@@ -242,7 +263,11 @@ function App() {
               onClick={handleMenu}
               sx={{ ml: 2 }}
             >
-              <AccountCircleIcon />
+              {profilePicture ? (
+                <Avatar src={profilePicture} sx={{ width: 32, height: 32 }} />
+              ) : (
+                <AccountCircleIcon />
+              )}
             </IconButton>
             <UserMenu 
               anchorEl={anchorEl}
