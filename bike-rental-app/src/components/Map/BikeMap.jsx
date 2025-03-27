@@ -5,6 +5,7 @@ import { supabase } from '../../services/supabase';
 import PedalBikeIcon from '@mui/icons-material/PedalBike';
 import DirectionsBikeIcon from '@mui/icons-material/DirectionsBike';
 
+
 const BikeMap = () => {
   const [locations, setLocations] = useState([]);
   const [loading, setLoading] = useState(true);

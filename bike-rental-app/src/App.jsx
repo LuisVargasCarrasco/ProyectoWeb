@@ -1,16 +1,17 @@
 import { useState, useEffect, memo } from 'react';
-import { 
-  Container, Box, Tabs, Tab, AppBar, Toolbar, 
-  Typography, IconButton, Menu, MenuItem, Avatar 
+import {
+  Container, Box, Tabs, Tab, AppBar, Toolbar,
+  Typography, IconButton, Menu, MenuItem, Avatar
 } from '@mui/material';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
+import { BrowserRouter as Router, Routes, Route, Link as RouterLink } from 'react-router-dom';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
-import DirectionsBikeIcon from '@mui/icons-material/DirectionsBike';
 import BikeMap from './components/Map/BikeMap';
 import LoginForm from './components/Auth/LoginFrom';
 import ReservationList from './components/Bikes/ReservationList';
 import RideHistory from './components/Bikes/RideHistory';
 import ActiveRides from './components/Bikes/ActiveRides';
+import Profile from './components/Auth/Profile';
 import UserProfile from './components/Auth/UserProfile';
 import { supabase } from './services/supabase';
 import './App.css';
@@ -61,25 +62,6 @@ const theme = createTheme({
         },
       },
     },
-    MuiCard: {
-      styleOverrides: {
-        root: {
-          boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-          transition: 'transform 0.2s ease-in-out',
-          '&:hover': {
-            transform: 'translateY(-2px)',
-          },
-        },
-      },
-    },
-    MuiAppBar: {
-      styleOverrides: {
-        root: {
-          backgroundColor: '#2E7D32',
-          boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-        },
-      },
-    },
     MuiTabs: {
       styleOverrides: {
         root: {
@@ -108,15 +90,15 @@ const Logo = memo(() => (
       component="img"
       src="/logobikeshare.jpg"
       alt="BikeShare Logo"
-      sx={{ 
+      sx={{
         height: 40,
         width: 'auto',
         objectFit: 'contain'
       }}
     />
-    <Typography 
-      variant="h6" 
-      sx={{ 
+    <Typography
+      variant="h6"
+      sx={{
         fontWeight: 600,
         display: 'flex',
         alignItems: 'center'
@@ -125,48 +107,6 @@ const Logo = memo(() => (
       BikeShare
     </Typography>
   </Box>
-));
-
-const NavigationTabs = memo(({ value, onChange }) => (
-  <Tabs 
-    value={value} 
-    onChange={onChange}
-    sx={{ 
-      borderBottom: 1, 
-      borderColor: 'divider',
-      bgcolor: 'background.paper',
-      px: 2
-    }}
-  >
-    <Tab label="Mapa" />
-    <Tab label="Mis Reservas" />
-    <Tab label="Viajes Activos" />
-    <Tab label="Historial" />
-    <Tab label="Mi Perfil" sx={{ ml: 'auto' }} />
-  </Tabs>
-));
-
-const UserMenu = memo(({ anchorEl, open, onClose, onProfile, onLogout }) => (
-  <Menu
-    anchorEl={anchorEl}
-    open={open}
-    onClose={onClose}
-    anchorOrigin={{
-      vertical: 'bottom',
-      horizontal: 'right',
-    }}
-    transformOrigin={{
-      vertical: 'top',
-      horizontal: 'right',
-    }}
-  >
-    <MenuItem onClick={onProfile}>
-      Mi Perfil
-    </MenuItem>
-    <MenuItem onClick={onLogout}>
-      Cerrar Sesión
-    </MenuItem>
-  </Menu>
 ));
 
 function App() {
@@ -221,15 +161,14 @@ function App() {
     handleClose();
   };
 
-  const handleProfileClick = () => {
-    setTab(4);
-    handleClose();
+  const handleTabChange = (event, newValue) => {
+    setTab(newValue);
   };
 
   if (!session) {
     return (
       <ThemeProvider theme={theme}>
-        <Box sx={{ 
+        <Box sx={{
           minHeight: '100vh',
           display: 'flex',
           alignItems: 'center',
@@ -247,73 +186,88 @@ function App() {
 
   return (
     <ThemeProvider theme={theme}>
-      <Box sx={{ 
-        height: '100vh',
-        display: 'flex', 
-        flexDirection: 'column',
-        overflow: 'hidden'
-      }}>
-        <AppBar position="static" elevation={0}>
-          <Toolbar>
-            <Box sx={{ flexGrow: 1 }}>
-              <Logo />
-            </Box>
-            <IconButton
-              color="inherit"
-              onClick={handleMenu}
-              sx={{ ml: 2 }}
-            >
-              {profilePicture ? (
-                <Avatar src={profilePicture} sx={{ width: 32, height: 32 }} />
-              ) : (
-                <AccountCircleIcon />
-              )}
-            </IconButton>
-            <UserMenu 
-              anchorEl={anchorEl}
-              open={open}
-              onClose={handleClose}
-              onProfile={handleProfileClick}
-              onLogout={handleLogout}
-            />
-          </Toolbar>
-        </AppBar>
-
-        <Box sx={{ 
-          flex: 1,
-          display: 'flex', 
+      <Router>
+        <Box sx={{
+          height: '100vh',
+          display: 'flex',
           flexDirection: 'column',
-          p: 3,
-          bgcolor: 'background.default',
           overflow: 'hidden'
         }}>
-          <Box sx={{ 
-            flex: 1, 
-            display: 'flex', 
+          <AppBar position="static" elevation={0}>
+            <Toolbar>
+              <Box sx={{ flexGrow: 1 }}>
+                <Logo />
+              </Box>
+              <IconButton
+                color="inherit"
+                onClick={handleMenu}
+                sx={{ ml: 2 }}
+              >
+                {profilePicture ? (
+                  <Avatar src={profilePicture} sx={{ width: 32, height: 32 }} />
+                ) : (
+                  <AccountCircleIcon />
+                )}
+              </IconButton>
+              <Menu
+                anchorEl={anchorEl}
+                open={open}
+                onClose={handleClose}
+                anchorOrigin={{
+                  vertical: 'bottom',
+                  horizontal: 'right',
+                }}
+                transformOrigin={{
+                  vertical: 'top',
+                  horizontal: 'right',
+                }}
+              >
+                <MenuItem onClick={() => setTab(4)}>Mi Perfil</MenuItem>
+                <MenuItem onClick={handleLogout}>Cerrar Sesión</MenuItem>
+              </Menu>
+            </Toolbar>
+          </AppBar>
+
+          <Tabs
+            value={tab}
+            onChange={handleTabChange}
+            sx={{
+              borderBottom: 1,
+              borderColor: 'divider',
+              bgcolor: 'background.paper',
+              px: 2,
+              '& .MuiTabs-indicator': {
+                backgroundColor: '#2E7D32',
+              },
+            }}
+          >
+            <Tab label="Mapa" component={RouterLink} to="/BikeMap" />
+            <Tab label="Mis Reservas" component={RouterLink} to="/ReservationList" />
+            <Tab label="Viajes Activos" component={RouterLink} to="/ActiveRides" />
+            <Tab label="Historial" component={RouterLink} to="/RideHistory" />
+            <Tab label="Mi Perfil" component={RouterLink} to="/Profile" />
+          </Tabs>
+
+          <Box sx={{
+            flex: 1,
+            display: 'flex',
             flexDirection: 'column',
-            bgcolor: 'background.paper',
-            borderRadius: 2,
-            overflow: 'hidden',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
+            p: 3,
+            bgcolor: 'background.default',
+            overflow: 'hidden'
           }}>
-            <NavigationTabs 
-              value={tab} 
-              onChange={(e, newValue) => setTab(newValue)}
-            />
-            <Box sx={{ 
-              flex: 1,
-              overflow: 'auto',
-              p: 2
-            }}>
-              {tab === 0 && <BikeMap />}
-              {tab === 1 && <ReservationList />}
-              {tab === 2 && <ActiveRides />}
-              {tab === 3 && <RideHistory />}
-              {tab === 4 && <UserProfile />}
-            </Box>
+            <Routes>
+              <Route path="/BikeMap" element={<BikeMap />} />
+              <Route path="/ReservationList" element={<ReservationList />} />
+              <Route path="/ActiveRides" element={<ActiveRides />} />
+              <Route path="/RideHistory" element={<RideHistory />} />
+              <Route path="/Profile" element={<Profile />} />
+              <Route path="/user-profile" element={<UserProfile />} />
+              <Route path="*" element={<BikeMap />} />
+            </Routes>
           </Box>
         </Box>
-      </Box>
+      </Router>
     </ThemeProvider>
   );
 }
