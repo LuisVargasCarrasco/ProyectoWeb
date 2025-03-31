@@ -228,25 +228,128 @@ function App() {
             </Toolbar>
           </AppBar>
 
-          <Tabs
-            value={tab}
-            onChange={handleTabChange}
+          <Box
             sx={{
+              display: 'flex',
+              justifyContent: 'center', // Centrar horizontalmente
+              bgcolor: 'background.paper',
               borderBottom: 1,
               borderColor: 'divider',
-              bgcolor: 'background.paper',
               px: 2,
-              '& .MuiTabs-indicator': {
-                backgroundColor: '#2E7D32',
-              },
             }}
           >
-            <Tab label="Mapa" component={RouterLink} to="/BikeMap" />
-            <Tab label="Mis Reservas" component={RouterLink} to="/ReservationList" />
-            <Tab label="Viajes Activos" component={RouterLink} to="/ActiveRides" />
-            <Tab label="Historial" component={RouterLink} to="/RideHistory" />
-            <Tab label="Mi Perfil" component={RouterLink} to="/Profile" />
-          </Tabs>
+            <Tabs
+              value={tab}
+              onChange={handleTabChange}
+              sx={{
+                borderBottom: 1,
+                borderColor: 'divider',
+                bgcolor: 'background.paper',
+                px: 2,
+                display: 'flex',
+                justifyContent: 'center', // Centrar horizontalmente
+                '& .MuiTabs-indicator': {
+                  display: 'none', // Ocultar el indicador predeterminado
+                },
+              }}
+            >
+              <Tab
+                label="Mapa"
+                component={RouterLink}
+                to="/BikeMap"
+                sx={{
+                  textTransform: 'none',
+                  fontWeight: 'bold',
+                  color: tab === 0 ? '#2E7D32' : '#1B5E20', // Color del texto
+                  bgcolor: tab === 0 ? '#E8F5E9' : 'transparent', // Fondo más claro para la pestaña activa
+                  borderRadius: 1,
+                  mx: 1,
+                  px: 3,
+                  py: 1,
+                  '&:hover': {
+                    bgcolor: '#F1F8E9',
+                    color: '#1B5E20',
+                  },
+                }}
+              />
+              <Tab
+                label="Mis Reservas"
+                component={RouterLink}
+                to="/ReservationList"
+                sx={{
+                  textTransform: 'none',
+                  fontWeight: 'bold',
+                  color: tab === 1 ? '#2E7D32' : '#1B5E20',
+                  bgcolor: tab === 1 ? '#E8F5E9' : 'transparent',
+                  borderRadius: 1,
+                  mx: 1,
+                  px: 3,
+                  py: 1,
+                  '&:hover': {
+                    bgcolor: '#F1F8E9',
+                    color: '#1B5E20',
+                  },
+                }}
+              />
+              <Tab
+                label="Viajes Activos"
+                component={RouterLink}
+                to="/ActiveRides"
+                sx={{
+                  textTransform: 'none',
+                  fontWeight: 'bold',
+                  color: tab === 2 ? '#2E7D32' : '#1B5E20',
+                  bgcolor: tab === 2 ? '#E8F5E9' : 'transparent',
+                  borderRadius: 1,
+                  mx: 1,
+                  px: 3,
+                  py: 1,
+                  '&:hover': {
+                    bgcolor: '#F1F8E9',
+                    color: '#1B5E20',
+                  },
+                }}
+              />
+              <Tab
+                label="Historial"
+                component={RouterLink}
+                to="/RideHistory"
+                sx={{
+                  textTransform: 'none',
+                  fontWeight: 'bold',
+                  color: tab === 3 ? '#2E7D32' : '#1B5E20',
+                  bgcolor: tab === 3 ? '#E8F5E9' : 'transparent',
+                  borderRadius: 1,
+                  mx: 1,
+                  px: 3,
+                  py: 1,
+                  '&:hover': {
+                    bgcolor: '#F1F8E9',
+                    color: '#1B5E20',
+                  },
+                }}
+              />
+              <Tab
+                label="Mi Perfil"
+                component={RouterLink}
+                to="/Profile"
+                sx={{
+                  textTransform: 'none',
+                  fontWeight: 'bold',
+                  color: tab === 4 ? '#2E7D32' : '#1B5E20',
+                  bgcolor: tab === 4 ? '#E8F5E9' : 'transparent',
+                  borderRadius: 1,
+                  mx: 1,
+                  px: 3,
+                  py: 1,
+                  '&:hover': {
+                    bgcolor: '#F1F8E9',
+                    color: '#1B5E20',
+                  },
+                }}
+              />
+            </Tabs>
+          </Box>
 
           <Box sx={{
             flex: 1,
