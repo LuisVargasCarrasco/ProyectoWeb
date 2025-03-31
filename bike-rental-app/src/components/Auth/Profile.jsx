@@ -68,10 +68,6 @@ const Profile = () => {
     }
   };
 
-  if (loading) {
-    return <Typography>Cargando...</Typography>;
-  }
-
   if (error) {
     return <Typography color="error">{error}</Typography>;
   }
@@ -118,13 +114,13 @@ const Profile = () => {
             <ListItemIcon>
               <PersonIcon />
             </ListItemIcon>
-            <ListItemText primary="Profile" />
+            <ListItemText primary="Perfil" />
           </ListItem>
-          <ListItem button>
+          <ListItem button component={Link} to="/RideHistory"> {/* Cambiado para redirigir al historial */}
             <ListItemIcon>
               <HistoryIcon />
             </ListItemIcon>
-            <ListItemText primary="Ride History" />
+            <ListItemText primary="Historial de Viajes" />
           </ListItem>
           <ListItem button>
             <ListItemIcon>

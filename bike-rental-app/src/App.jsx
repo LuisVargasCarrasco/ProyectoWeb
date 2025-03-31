@@ -311,25 +311,6 @@ function App() {
                 }}
               />
               <Tab
-                label="Historial"
-                component={RouterLink}
-                to="/RideHistory"
-                sx={{
-                  textTransform: 'none',
-                  fontWeight: 'bold',
-                  color: tab === 3 ? '#2E7D32' : '#1B5E20',
-                  bgcolor: tab === 3 ? '#E8F5E9' : 'transparent',
-                  borderRadius: 1,
-                  mx: 1,
-                  px: 3,
-                  py: 1,
-                  '&:hover': {
-                    bgcolor: '#F1F8E9',
-                    color: '#1B5E20',
-                  },
-                }}
-              />
-              <Tab
                 label="Mi Perfil"
                 component={RouterLink}
                 to="/Profile"
