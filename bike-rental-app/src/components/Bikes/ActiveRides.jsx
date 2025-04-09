@@ -74,7 +74,7 @@ const ActiveRides = () => {
     try {
       setLoading(true);
       const { data: { user } } = await supabase.auth.getUser();
-
+  
       const { data, error } = await supabase
         .from('trip')
         .select(`
@@ -85,7 +85,7 @@ const ActiveRides = () => {
           start_location_id,
           bike:bike_id (
             id,
-            model_id
+            model
           ),
           start_location:start_location_id (
             id,
@@ -96,7 +96,7 @@ const ActiveRides = () => {
         `)
         .eq('user_id', user.id)
         .eq('status', TRIP_STATUS.ACTIVE);
-
+  
       if (error) throw error;
       setActiveTrips(data || []);
     } catch (err) {

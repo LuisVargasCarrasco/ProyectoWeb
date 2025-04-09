@@ -13,6 +13,7 @@ import RideHistory from './components/Bikes/RideHistory';
 import ActiveRides from './components/Bikes/ActiveRides';
 import Profile from './components/Auth/Profile';
 import UserProfile from './components/Auth/UserProfile';
+import Home from './components/Home';
 import { supabase } from './services/supabase';
 import './App.css';
 
@@ -254,14 +255,33 @@ function App() {
               }}
             >
               <Tab
+                label="Inicio"
+                component={RouterLink}
+                to="/Inicio"
+                sx={{
+                  textTransform: 'none',
+                  fontWeight: 'bold',
+                  color: tab === 0 ? '#2E7D32' : '#1B5E20', // Color del texto
+                  bgcolor: tab === 0 ? '#E8F5E9' : 'transparent', // Fondo más claro para la pestaña activa
+                  borderRadius: 1,
+                  mx: 1,
+                  px: 3,
+                  py: 1,
+                  '&:hover': {
+                    bgcolor: '#F1F8E9',
+                    color: '#1B5E20',
+                  },
+                }}
+              />
+              <Tab
                 label="Mapa"
                 component={RouterLink}
                 to="/BikeMap"
                 sx={{
                   textTransform: 'none',
                   fontWeight: 'bold',
-                  color: tab === 0 ? '#2E7D32' : '#1B5E20', // Color del texto
-                  bgcolor: tab === 0 ? '#E8F5E9' : 'transparent', // Fondo más claro para la pestaña activa
+                  color: tab === 1 ? '#2E7D32' : '#1B5E20',
+                  bgcolor: tab === 1 ? '#E8F5E9' : 'transparent',
                   borderRadius: 1,
                   mx: 1,
                   px: 3,
@@ -279,8 +299,8 @@ function App() {
                 sx={{
                   textTransform: 'none',
                   fontWeight: 'bold',
-                  color: tab === 1 ? '#2E7D32' : '#1B5E20',
-                  bgcolor: tab === 1 ? '#E8F5E9' : 'transparent',
+                  color: tab === 2 ? '#2E7D32' : '#1B5E20',
+                  bgcolor: tab === 2 ? '#E8F5E9' : 'transparent',
                   borderRadius: 1,
                   mx: 1,
                   px: 3,
@@ -298,8 +318,8 @@ function App() {
                 sx={{
                   textTransform: 'none',
                   fontWeight: 'bold',
-                  color: tab === 2 ? '#2E7D32' : '#1B5E20',
-                  bgcolor: tab === 2 ? '#E8F5E9' : 'transparent',
+                  color: tab === 3 ? '#2E7D32' : '#1B5E20',
+                  bgcolor: tab === 3 ? '#E8F5E9' : 'transparent',
                   borderRadius: 1,
                   mx: 1,
                   px: 3,
@@ -341,14 +361,15 @@ function App() {
             overflow: 'hidden'
           }}>
             <Routes>
+            <Route path="/Inicio" element={<Home />} />
               <Route path="/BikeMap" element={<BikeMap />} />
               <Route path="/ReservationList" element={<ReservationList />} />
               <Route path="/ActiveRides" element={<ActiveRides />} />
               <Route path="/RideHistory" element={<RideHistory />} />
               <Route path="/Profile" element={<Profile />} />
               <Route path="/user-profile" element={<UserProfile />} />
-              <Route path="*" element={<BikeMap />} />
-            </Routes>
+              <Route path="*" element={<Home />} />
+              </Routes>
           </Box>
         </Box>
       </Router>

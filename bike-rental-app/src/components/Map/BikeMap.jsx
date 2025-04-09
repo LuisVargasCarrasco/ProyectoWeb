@@ -1,10 +1,11 @@
-import { GoogleMap, useLoadScript, Marker, InfoWindow } from '@react-google-maps/api';
+import { GoogleMap, useLoadScript, Marker } from '@react-google-maps/api';
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { Box, Paper, Typography, CircularProgress, Chip, Alert, Button, MenuItem, Select, FormControl, InputLabel } from '@mui/material';
+import {
+  Box, Paper, CircularProgress, Alert, Button, Select, MenuItem,
+  Radio, RadioGroup, FormControlLabel, Dialog, DialogTitle,
+  DialogContent, DialogActions
+} from '@mui/material';
 import { supabase } from '../../services/supabase';
-import PedalBikeIcon from '@mui/icons-material/PedalBike';
-import DirectionsBikeIcon from '@mui/icons-material/DirectionsBike';
-
 
 const BikeMap = () => {
   const [locations, setLocations] = useState([]);
@@ -12,7 +13,9 @@ const BikeMap = () => {
   const [error, setError] = useState(null);
   const [selectedLocation, setSelectedLocation] = useState(null);
   const [userLocation, setUserLocation] = useState(null);
-  const [filter, setFilter] = useState('all');
+  const [selectedModel, setSelectedModel] = useState('');
+  const [modelDialog, setModelDialog] = useState(false);
+  const [filterOption, setFilterOption] = useState('all'); // Filtro: 'all', 'available', 'nearby'
 
   const center = useMemo(() => ({ lat: 41.3851, lng: 2.1734 }), []); // Plaza Catalunya
 
@@ -33,11 +36,11 @@ const BikeMap = () => {
         `);
 
       if (locError) throw locError;
+      console.log('Ubicaciones con bicicletas:', locations); // Depuración
       setLocations(locations || []);
-
     } catch (err) {
-      console.error('Error fetching data:', err);
-      setError(err.message);
+      console.error('Error fetching locations with bikes:', err);
+      setError('Error al cargar las ubicaciones con bicicletas');
     } finally {
       setLoading(false);
     }
@@ -75,65 +78,75 @@ const BikeMap = () => {
     }
   }, []);
 
-  const getDistance = (loc1, loc2) => {
-    const R = 6371; // Radius of the Earth in km
-    const dLat = (loc2.lat - loc1.lat) * (Math.PI / 180);
-    const dLng = (loc2.lng - loc1.lng) * (Math.PI / 180);
-    const a =
-      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos(loc1.lat * (Math.PI / 180)) * Math.cos(loc2.lat * (Math.PI / 180)) *
-      Math.sin(dLng / 2) * Math.sin(dLng / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c; // Distance in km
-  };
-
   const handleMarkerClick = useCallback((location) => {
     setSelectedLocation(location);
+    setModelDialog(true);
   }, []);
 
-  const handleReserveBike = async (bikeId) => {
+  const handleReserveBike = async () => {
     try {
-      const { error } = await supabase
+      if (!selectedModel) {
+        alert('Por favor, selecciona un modelo de bicicleta');
+        return;
+      }
+
+      const { data, error } = await supabase
         .from('bike')
-        .update({ status: 'reserved' })
-        .eq('id', bikeId);
+        .select('*')
+        .eq('status', 'available')
+        .eq('model', selectedModel)
+        .eq('current_location_id', selectedLocation.id);
 
       if (error) throw error;
 
+      if (data.length === 0) {
+        alert('No hay bicicletas disponibles para el modelo seleccionado en esta ubicación');
+        return;
+      }
+
+      const bikeToReserve = data[0];
+      const { error: reserveError } = await supabase
+        .from('bike')
+        .update({ status: 'reserved' })
+        .eq('id', bikeToReserve.id);
+
+      if (reserveError) throw reserveError;
+
+      alert(`¡Bicicleta modelo ${bikeToReserve.model} reservada con éxito!`);
+      setModelDialog(false);
       fetchLocationsWithBikes();
       setSelectedLocation(null);
     } catch (err) {
       console.error('Error reserving bike:', err);
-      setError('Error al reservar la bicicleta');
+      alert('Error al reservar la bicicleta: ' + err.message);
     }
   };
 
-  const handleFilterChange = (event) => {
-    setFilter(event.target.value);
-  };
-
-  const filteredLocations = useMemo(() => {
-    if (userLocation) {
-      return locations.filter(location => {
-        const distance = getDistance(userLocation, { lat: location.latitude, lng: location.longitude });
-        const hasAvailableBikes = location.bikes.some(bike => bike.status === 'available');
-        if (filter === 'distance') {
-          return distance <= 1; // Filtrar ubicaciones dentro de un radio de 1 km
-        } else if (filter === 'availability') {
-          return hasAvailableBikes;
-        }
-        return true;
-      });
+  const filterLocations = () => {
+    if (filterOption === 'available') {
+      return locations.filter((location) =>
+        location.bikes.some((bike) => bike.status === 'available')
+      );
     }
-    return locations;
-  }, [locations, userLocation, filter]);
+
+    if (filterOption === 'nearby' && userLocation) {
+      return locations
+        .map((location) => ({
+          ...location,
+          distance: Math.sqrt(
+            Math.pow(location.latitude - userLocation.lat, 2) +
+            Math.pow(location.longitude - userLocation.lng, 2)
+          ),
+        }))
+        .sort((a, b) => a.distance - b.distance);
+    }
+
+    return locations; // 'all' option
+  };
 
   if (loadError) {
     return (
-      <Alert
-        severity="error"
-        sx={{ m: 2 }}
-      >
+      <Alert severity="error" sx={{ m: 2 }}>
         Error al cargar el mapa: {loadError.message}
       </Alert>
     );
@@ -157,58 +170,23 @@ const BikeMap = () => {
 
   if (error) {
     return (
-      <Alert
-        severity="error"
-        sx={{ m: 2 }}
-      >
+      <Alert severity="error" sx={{ m: 2 }}>
         {error}
       </Alert>
     );
   }
 
   return (
-    <Box sx={{
-      display: 'flex',
-      flexDirection: 'column',
-      height: '100%',
-      gap: 2
-    }}>
-      <Paper
-        elevation={2}
-        sx={{
-          p: 2,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-        }}
+    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', gap: 2 }}>
+      <Select
+        value={filterOption}
+        onChange={(e) => setFilterOption(e.target.value)}
+        sx={{ mb: 2 }}
       >
-        <FormControl variant="outlined" sx={{ minWidth: 120 }}>
-          <InputLabel>Filtrar por</InputLabel>
-          <Select
-            value={filter}
-            onChange={handleFilterChange}
-            label="Filtrar por"
-          >
-            <MenuItem value="all">Todas</MenuItem>
-            <MenuItem value="distance">Distancia</MenuItem>
-            <MenuItem value="availability">Disponibilidad</MenuItem>
-          </Select>
-        </FormControl>
-        <Typography variant="h5" sx={{ fontWeight: 600 }}>
-          Estaciones de Bicicletas
-        </Typography>
-        <Chip
-          icon={<PedalBikeIcon />}
-          label={`${locations.reduce((acc, loc) =>
-            acc + loc.bikes.filter(b => b.status === 'available').length, 0
-          )} bicicletas disponibles`}
-          color="primary"
-          sx={{
-            px: 1,
-            '& .MuiChip-label': { fontWeight: 500 }
-          }}
-        />
-      </Paper>
+        <MenuItem value="all">Todas las estaciones</MenuItem>
+        <MenuItem value="available">Estaciones con bicicletas disponibles</MenuItem>
+        <MenuItem value="nearby">Estaciones cercanas</MenuItem>
+      </Select>
 
       <Paper
         elevation={3}
@@ -235,7 +213,17 @@ const BikeMap = () => {
             fullscreenControl: true
           }}
         >
-          {filteredLocations.map((location) => (
+          {userLocation && (
+            <Marker
+              position={userLocation}
+              icon={{
+                url: '/user-location.png',
+                scaledSize: new window.google.maps.Size(40, 40),
+              }}
+            />
+          )}
+
+          {filterLocations().map((location) => (
             <Marker
               key={location.id}
               position={{ lat: location.latitude, lng: location.longitude }}
@@ -248,79 +236,49 @@ const BikeMap = () => {
               }}
             />
           ))}
-          {selectedLocation && (
-            <InfoWindow
-              position={{
-                lat: selectedLocation.latitude,
-                lng: selectedLocation.longitude
-              }}
-              onCloseClick={() => setSelectedLocation(null)}
-            >
-              <Box sx={{
-                p: 1,
-                minWidth: 200,
-                '& .MuiTypography-root': { mb: 1 }
-              }}>
-                <Typography
-                  variant="subtitle1"
-                  sx={{
-                    fontWeight: 600,
-                    color: 'primary.main'
-                  }}
-                >
-                  {selectedLocation.location_name}
-                </Typography>
-                <Typography
-                  variant="body2"
-                  sx={{ color: 'text.secondary' }}
-                >
-                  {selectedLocation.address}
-                </Typography>
-                <Typography
-                  variant="body2"
-                  sx={{
-                    bgcolor: 'primary.light',
-                    color: 'white',
-                    p: 1,
-                    borderRadius: 1,
-                    display: 'inline-block'
-                  }}
-                >
-                  Bicicletas disponibles: {
-                    selectedLocation.bikes.filter(b => b.status === 'available').length
-                  }
-                </Typography>
-                {selectedLocation.bikes.some(b => b.status === 'available') && (
-                  <Button
-                    variant="contained"
-                    size="small"
-                    startIcon={<DirectionsBikeIcon />}
-                    onClick={() => handleReserveBike(
-                      selectedLocation.bikes.find(b => b.status === 'available').id
-                    )}
-                    sx={{
-                      mt: 2,
-                      width: '100%',
-                      boxShadow: 2
-                    }}
-                  >
-                    Reservar
-                  </Button>
-                )}
-              </Box>
-            </InfoWindow>
-          )}
-          {userLocation && (
-            <Marker
-              position={userLocation}
-              icon={{
-                url: '/user-location.png',
-                scaledSize: new window.google.maps.Size(40, 40)
-              }}
-            />
-          )}
         </GoogleMap>
       </Paper>
+
+      <Dialog
+        open={modelDialog}
+        onClose={() => setModelDialog(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>{selectedLocation?.location_name}</DialogTitle>
+        <DialogContent>
+          {console.log('Bicicletas en la ubicación seleccionada:', selectedLocation?.bikes)}
+          <RadioGroup
+            value={selectedModel}
+            onChange={(e) => setSelectedModel(e.target.value)}
+          >
+            {['normal', 'electric', 'tandem'].map((model) => {
+              const count = selectedLocation?.bikes
+                ?.filter((bike) => {
+                  console.log(`Filtrando modelo: ${model}, bicicleta:`, bike);
+                  return bike.model === model && bike.status === 'available';
+                })
+                .length || 0;
+
+              return (
+                <FormControlLabel
+                  key={model}
+                  value={model}
+                  control={<Radio />}
+                  label={`${model}: ${count}`}
+                  disabled={count === 0} // Deshabilitar si no hay bicicletas disponibles
+                />
+              );
+            })}
+          </RadioGroup>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setModelDialog(false)}>Cancelar</Button>
+          <Button onClick={handleReserveBike} variant="contained">
+            Reservar
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

@@ -41,9 +41,9 @@ const RideHistory = () => {
     try {
       setLoading(true);
       const { data: { user } } = await supabase.auth.getUser();
-
+  
       if (!user) throw new Error('No user logged in');
-
+  
       const { data, error } = await supabase
         .from('trip')
         .select(`
@@ -57,7 +57,7 @@ const RideHistory = () => {
           route,
           bike:bike_id (
             id,
-            model_id
+            model
           ),
           start_location:start_location_id (
             id,
@@ -75,10 +75,9 @@ const RideHistory = () => {
         .eq('user_id', user.id)
         .eq('status', TRIP_STATUS.COMPLETED)
         .order('start_time', { ascending: false });
-
+  
       if (error) throw error;
       setTrips(data || []);
-
     } catch (err) {
       console.error('Error fetching history:', err);
       setError(err.message);
@@ -231,7 +230,7 @@ const RideHistory = () => {
                       <Typography variant="h6" sx={{ fontWeight: 600 }}>
                         Bicicleta #{trip.bike?.id}
                         <Chip
-                          label={`Modelo ${trip.bike?.model_id}`}
+                          label={`Modelo ${trip.bike.model}`}
                           size="small"
                           sx={{ ml: 1 }}
                           color="primary"
