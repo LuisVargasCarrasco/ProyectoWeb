@@ -3,7 +3,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   Box, Paper, CircularProgress, Alert, Button, Select, MenuItem,
   Radio, RadioGroup, FormControlLabel, Dialog, DialogTitle,
-  DialogContent, DialogActions
+  DialogContent, DialogActions, Typography
 } from '@mui/material';
 import { supabase } from '../../services/supabase';
 
@@ -130,15 +130,31 @@ const BikeMap = () => {
     }
 
     if (filterOption === 'nearby' && userLocation) {
-      return locations
-        .map((location) => ({
-          ...location,
-          distance: Math.sqrt(
-            Math.pow(location.latitude - userLocation.lat, 2) +
-            Math.pow(location.longitude - userLocation.lng, 2)
-          ),
-        }))
-        .sort((a, b) => a.distance - b.distance);
+      const EARTH_RADIUS_KM = 6371; // Radio de la Tierra en kilómetros
+
+      const haversineDistance = (lat1, lon1, lat2, lon2) => {
+        const toRadians = (degrees) => (degrees * Math.PI) / 180;
+        const dLat = toRadians(lat2 - lat1);
+        const dLon = toRadians(lon2 - lon1);
+        const lat1Rad = toRadians(lat1);
+        const lat2Rad = toRadians(lat2);
+
+        const a =
+          Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+          Math.cos(lat1Rad) * Math.cos(lat2Rad) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return EARTH_RADIUS_KM * c;
+      };
+
+      return locations.filter((location) => {
+        const distance = haversineDistance(
+          userLocation.lat,
+          userLocation.lng,
+          location.latitude,
+          location.longitude
+        );
+        return distance <= 1; // Filtrar estaciones a 1 km o menos
+      });
     }
 
     return locations; // 'all' option
@@ -254,18 +270,33 @@ const BikeMap = () => {
           >
             {['normal', 'electric', 'tandem'].map((model) => {
               const count = selectedLocation?.bikes
-                ?.filter((bike) => {
-                  console.log(`Filtrando modelo: ${model}, bicicleta:`, bike);
-                  return bike.model === model && bike.status === 'available';
-                })
+                ?.filter((bike) => bike.model === model && bike.status === 'available')
                 .length || 0;
+
+              const modelImages = {
+                normal: '/bike.png',
+                electric: '/electric-bike.png',
+                tandem: '/tandem.png',
+              };
 
               return (
                 <FormControlLabel
                   key={model}
                   value={model}
                   control={<Radio />}
-                  label={`${model}: ${count}`}
+                  label={
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                      <Box
+                        component="img"
+                        src={modelImages[model]}
+                        alt={`Bicicleta ${model}`}
+                        sx={{ width: 40, height: 40 }}
+                      />
+                      <Typography>
+                        {`${model.charAt(0).toUpperCase() + model.slice(1)}: ${count}`}
+                      </Typography>
+                    </Box>
+                  }
                   disabled={count === 0} // Deshabilitar si no hay bicicletas disponibles
                 />
               );

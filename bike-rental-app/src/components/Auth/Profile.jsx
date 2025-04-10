@@ -124,24 +124,6 @@ const Profile = () => {
           </ListItem>
           <ListItem button>
             <ListItemIcon>
-              <DirectionsBikeIcon />
-            </ListItemIcon>
-            <ListItemText primary="Freerides" />
-          </ListItem>
-          <ListItem button>
-            <ListItemIcon>
-              <StarIcon />
-            </ListItemIcon>
-            <ListItemText primary="Become a Member" />
-          </ListItem>
-          <ListItem button>
-            <ListItemIcon>
-              <DescriptionIcon />
-            </ListItemIcon>
-            <ListItemText primary="Plans" />
-          </ListItem>
-          <ListItem button>
-            <ListItemIcon>
               <HelpIcon />
             </ListItemIcon>
             <ListItemText primary="Help" />

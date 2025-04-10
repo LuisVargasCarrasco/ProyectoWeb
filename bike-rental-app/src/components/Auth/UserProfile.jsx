@@ -110,7 +110,6 @@ const UserProfile = () => {
       }));
 
       setEditing(false);
-      alert('Perfil actualizado correctamente');
 
     } catch (err) {
       setError(err.message);

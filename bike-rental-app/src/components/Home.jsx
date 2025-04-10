@@ -19,7 +19,6 @@ const Home = () => {
   useEffect(() => {
     const fetchWeather = async () => {
       try {
-        // Coordenadas fijas de Barcelona
         const latitude = 41.3851;
         const longitude = 2.1734;
 
@@ -33,13 +32,15 @@ const Home = () => {
         }
 
         const data = await response.json();
-        console.log('Datos del clima:', data); // Depuración
+        console.log('Datos del clima:', data);
 
         setWeather({
           location: data.name,
           temperature: data.main.temp,
           description: data.weather[0].description,
           icon: `https://openweathermap.org/img/wn/${data.weather[0].icon}@2x.png`,
+          windSpeed: data.wind.speed, // Velocidad del viento
+          airQuality: 'Buena', // Simulación de calidad del aire
         });
         setLoading(false);
       } catch (err) {
@@ -67,41 +68,63 @@ const Home = () => {
       </Typography>
 
       {/* Información del clima */}
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h5" sx={{ fontWeight: 'bold', mb: 2 }}>
-          Información del clima
-        </Typography>
+      <Box sx={{ mb: 4, display: 'flex', justifyContent: 'flex-start' }}>
         {loading ? (
           <CircularProgress />
         ) : error ? (
-          <Typography color="error">{error}</Typography>
+          <Typography variant="body1" color="error">
+            {error}
+          </Typography>
         ) : (
-          <Paper elevation={3} sx={{ p: 3, display: 'flex', alignItems: 'center', gap: 2 }}>
-            <Box
-              component="img"
-              src={weather.icon}
-              alt={weather.description}
-              sx={{ width: 50, height: 50 }}
-            />
-            <Box>
-              <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
-                {weather.location}
-              </Typography>
-              <Typography variant="body2">{formattedDate}</Typography>
-              <Typography variant="body2" sx={{ textTransform: 'capitalize' }}>
-                {weather.description}
-              </Typography>
-              <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
-                {weather.temperature}°C
-              </Typography>
-            </Box>
-          </Paper>
+          weather && (
+            <Paper
+              elevation={3}
+              sx={{
+                p: 3,
+                display: 'flex',
+                flexDirection: 'row', // Disposición horizontal
+                alignItems: 'center',
+                gap: 4, // Espaciado entre los elementos
+                maxWidth: '800px', // Ancho máximo del contenedor
+                width: '100%',
+                borderRadius: 3,
+                background: 'white',
+              }}
+            >
+              <Box
+                component="img"
+                src={weather.icon}
+                alt={weather.description}
+                sx={{ width: 100, height: 100 }}
+              />
+              <Box sx={{ textAlign: 'left' }}>
+                <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+                  {weather.location}
+                </Typography>
+                <Typography variant="body2">{formattedDate}</Typography>
+                <Typography variant="body2" sx={{ textTransform: 'capitalize' }}>
+                  {weather.description}
+                </Typography>
+                <Typography variant="h4" sx={{ fontWeight: 'bold', mt: 1 }}>
+                  {weather.temperature}°C
+                </Typography>
+                <Box sx={{ mt: 2 }}>
+                  <Typography variant="body2">
+                    <strong>Velocidad del viento:</strong> {weather.windSpeed} km/h
+                  </Typography>
+                  <Typography variant="body2">
+                    <strong>Calidad del aire:</strong> {weather.airQuality}
+                  </Typography>
+                </Box>
+              </Box>
+            </Paper>
+          )
         )}
       </Box>
 
       <Typography variant="h5" sx={{ fontWeight: 'bold', mb: 2 }}>
         Nuestras Bicicletas
-     </Typography>
+      </Typography>
       {/* Información de las bicicletas */}
       <Typography variant="body1" sx={{ mb: 4 }}>
         Explora nuestra flota de bicicletas y disfruta de la ciudad de una manera sostenible. Ofrecemos tres modelos de bicicletas para adaptarnos a tus necesidades.
@@ -110,8 +133,13 @@ const Home = () => {
       <Grid container spacing={3}>
         {/* Modelo Eléctrico */}
         <Grid item xs={12} md={4}>
-          <Paper elevation={3} sx={{ p: 3, textAlign: 'center' }}>
-            <ElectricBikeIcon sx={{ fontSize: 50, color: 'primary.main', mb: 2 }} />
+          <Paper elevation={3} sx={{ p: 3, textAlign: 'center', height: '250px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+            <Box
+              component="img"
+              src="/electric-bike.png"
+              alt="Bicicleta Eléctrica"
+              sx={{ width: 100, height: 100, mb: 2, margin: '0 auto' }}
+            />
             <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
               Bicicleta Eléctrica
             </Typography>
@@ -123,8 +151,13 @@ const Home = () => {
 
         {/* Modelo Normal */}
         <Grid item xs={12} md={4}>
-          <Paper elevation={3} sx={{ p: 3, textAlign: 'center' }}>
-            <PedalBikeIcon sx={{ fontSize: 50, color: 'primary.main', mb: 2 }} />
+          <Paper elevation={3} sx={{ p: 3, textAlign: 'center', height: '250px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+            <Box
+              component="img"
+              src="/bike.png"
+              alt="Bicicleta Normal"
+              sx={{ width: 100, height: 100, mb: 2, margin: '0 auto' }}
+            />
             <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
               Bicicleta Normal
             </Typography>
@@ -136,8 +169,13 @@ const Home = () => {
 
         {/* Modelo Tándem */}
         <Grid item xs={12} md={4}>
-          <Paper elevation={3} sx={{ p: 3, textAlign: 'center' }}>
-            <TwoWheelerIcon sx={{ fontSize: 50, color: 'primary.main', mb: 2 }} />
+          <Paper elevation={3} sx={{ p: 3, textAlign: 'center', height: '250px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+            <Box
+              component="img"
+              src="/tandem.png"
+              alt="Bicicleta Tándem"
+              sx={{ width: 100, height: 100, mb: 2, margin: '0 auto' }}
+            />
             <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
               Bicicleta Tándem
             </Typography>

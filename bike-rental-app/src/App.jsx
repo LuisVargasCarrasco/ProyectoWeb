@@ -102,7 +102,8 @@ const Logo = memo(() => (
       sx={{
         fontWeight: 600,
         display: 'flex',
-        alignItems: 'center'
+        alignItems: 'center',
+        color: 'white'
       }}
     >
       BikeShare
