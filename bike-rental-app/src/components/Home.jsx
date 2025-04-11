@@ -1,8 +1,5 @@
 import { useState, useEffect } from 'react';
 import { Box, Typography, Paper, Grid, CircularProgress } from '@mui/material';
-import PedalBikeIcon from '@mui/icons-material/PedalBike';
-import ElectricBikeIcon from '@mui/icons-material/ElectricBike';
-import TwoWheelerIcon from '@mui/icons-material/TwoWheeler';
 import { createClient } from '@supabase/supabase-js';
 
 // Configuración de Supabase
@@ -14,13 +11,12 @@ const Home = () => {
   const [weather, setWeather] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [userName, setUserName] = useState(''); // Estado para el nombre del usuario
 
   useEffect(() => {
     const fetchWeather = async () => {
       try {
-        const latitude = 41.3851;
-        const longitude = 2.1734;
+        const latitude =   41.39546644757988;
+        const longitude = 2.1656018192663193;
 
         const apiKey = import.meta.env.VITE_OPENWEATHER_API_KEY;
         const response = await fetch(
@@ -61,7 +57,7 @@ const Home = () => {
   });
 
   return (
-    <Box sx={{ p: 3 }}>
+    <Box sx={{ p: 3}}>
       {/* Título de bienvenida */}
       <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 2 }}>
         ¡Bienvenido, a BikeShare!

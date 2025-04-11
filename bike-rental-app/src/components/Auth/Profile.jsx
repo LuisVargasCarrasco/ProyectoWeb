@@ -7,10 +7,7 @@ import {
 import PersonIcon from '@mui/icons-material/Person';
 import DirectionsCarIcon from '@mui/icons-material/DirectionsCar';
 import HistoryIcon from '@mui/icons-material/History';
-import DirectionsBikeIcon from '@mui/icons-material/DirectionsBike';
-import StarIcon from '@mui/icons-material/Star';
 import HelpIcon from '@mui/icons-material/Help';
-import DescriptionIcon from '@mui/icons-material/Description';
 import NatureIcon from '@mui/icons-material/Nature';
 
 const Profile = () => {

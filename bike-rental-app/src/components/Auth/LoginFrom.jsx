@@ -31,7 +31,7 @@ const LoginForm = () => {
       alert(error.message);
     }
   };
-
+ 
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -47,7 +47,7 @@ const LoginForm = () => {
           alignItems: 'center', // Centra el formulario verticalmente
           backgroundImage: 'url(/login-register.jpg)', // Ruta de la imagen
           backgroundSize: 'cover', // Ajusta la imagen para cubrir todo el fondo
-          backgroundPosition: '', // Centra la imagen en el fondo
+          backgroundPosition: 'center', // Centra la imagen en el fondo
           backgroundRepeat: 'no-repeat', // Evita que la imagen se repita
         }}
       >
