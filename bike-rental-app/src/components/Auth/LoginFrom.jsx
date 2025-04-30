@@ -41,14 +41,9 @@ const LoginForm = () => {
       <Box
         sx={{
           minHeight: '100vh', // Asegura que el contenedor ocupe toda la altura de la ventana
-          width: '100vw', // Asegura que el contenedor ocupe todo el ancho de la ventana
           display: 'flex',
           justifyContent: 'center', // Centra el formulario horizontalmente
           alignItems: 'center', // Centra el formulario verticalmente
-          backgroundImage: 'url(/login-register.jpg)', // Ruta de la imagen
-          backgroundSize: 'cover', // Ajusta la imagen para cubrir todo el fondo
-          backgroundPosition: 'center', // Centra la imagen en el fondo
-          backgroundRepeat: 'no-repeat', // Evita que la imagen se repita
         }}
       >
         <Box

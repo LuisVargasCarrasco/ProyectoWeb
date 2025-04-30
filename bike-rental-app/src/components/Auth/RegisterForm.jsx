@@ -23,8 +23,6 @@ const RegisterForm = ({ onToggleForm }) => {
     });
     if (error) {
       alert(error.message);
-    } else {
-      alert('Revisa tu email para confirmar el registro');
     }
   };
 

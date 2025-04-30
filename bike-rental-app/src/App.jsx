@@ -66,7 +66,7 @@ const theme = createTheme({
     MuiTabs: {
       styleOverrides: {
         root: {
-          borderBottom: '1px solid rgba(0, 0, 0, 0.12)',
+          borderBottom: 'none',
         },
       },
     },
@@ -76,6 +76,7 @@ const theme = createTheme({
           textTransform: 'none',
           fontWeight: 600,
           minWidth: 120,
+          color: 'black',
           '&.Mui-selected': {
             color: '#2E7D32',
           },
@@ -103,7 +104,7 @@ const Logo = memo(() => (
         fontWeight: 600,
         display: 'flex',
         alignItems: 'center',
-        color: 'white'
+        color: 'black'
       }}
     >
       BikeShare
@@ -176,7 +177,7 @@ function App() {
           alignItems: 'center',
           justifyContent: 'center',
           bgcolor: '#2E7D32',
-          backgroundImage: 'linear-gradient(135deg, #2E7D32 0%, #1B5E20 100%)',
+          backgroundImage: 'linear-gradient(135deg,rgb(74, 185, 79) 0%,rgb(72, 192, 80) 100%)',
         }}>
           <Container maxWidth="sm">
             <LoginForm />
@@ -190,16 +191,78 @@ function App() {
     <ThemeProvider theme={theme}>
       <Router>
         <Box sx={{
-          height: '100vh',
+          minHeight: '100vh',
           display: 'flex',
           flexDirection: 'column',
-          overflow: 'hidden'
+          overflow: 'auto'
         }}>
-          <AppBar position="static" elevation={0}>
-            <Toolbar>
-              <Box sx={{ flexGrow: 1 }}>
-                <Logo />
-              </Box>
+          <AppBar position="static" elevation={0} sx={{ bgcolor: 'white', color: 'black' }}>
+            <Toolbar sx={{ minHeight: 64 }}>
+              <Logo />
+              <Tabs
+                value={tab}
+                onChange={handleTabChange}
+                sx={{
+                  ml: 4,
+                  flex: 1,
+                  '.MuiTab-root': {
+                    color: 'black',
+                    fontWeight: 'bold',
+                    fontSize: '1rem',
+                    minWidth: 100,
+                  },
+                  '.Mui-selected': {
+                    color: '#5CCB5F',
+                  },
+                  '.MuiTabs-indicator': {
+                    backgroundColor: '#5CCB5F',
+                  },
+                }}
+                TabIndicatorProps={{
+                  style: { height: 3 }
+                }}
+              >
+                <Tab
+                  label="Inicio"
+                  component={RouterLink}
+                  to="/Inicio"
+                  sx={{
+                    textTransform: 'none',
+                  }}
+                />
+                <Tab
+                  label="Mapa"
+                  component={RouterLink}
+                  to="/BikeMap"
+                  sx={{
+                    textTransform: 'none',
+                  }}
+                />
+                <Tab
+                  label="Mis Reservas"
+                  component={RouterLink}
+                  to="/ReservationList"
+                  sx={{
+                    textTransform: 'none',
+                  }}
+                />
+                <Tab
+                  label="Viajes Activos"
+                  component={RouterLink}
+                  to="/ActiveRides"
+                  sx={{
+                    textTransform: 'none',
+                  }}
+                />
+                <Tab
+                  label="Mi Perfil"
+                  component={RouterLink}
+                  to="/Profile"
+                  sx={{
+                    textTransform: 'none',
+                  }}
+                />
+              </Tabs>
               <IconButton
                 color="inherit"
                 onClick={handleMenu}
@@ -208,7 +271,7 @@ function App() {
                 {profilePicture ? (
                   <Avatar src={profilePicture} sx={{ width: 32, height: 32 }} />
                 ) : (
-                  <AccountCircleIcon />
+                  <AccountCircleIcon sx={{ color: 'black' }} />
                 )}
               </IconButton>
               <Menu
@@ -230,139 +293,16 @@ function App() {
             </Toolbar>
           </AppBar>
 
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'center', // Centrar horizontalmente
-              bgcolor: 'background.paper',
-              borderBottom: 1,
-              borderColor: 'divider',
-              px: 2,
-            }}
-          >
-            <Tabs
-              value={tab}
-              onChange={handleTabChange}
-              sx={{
-                borderBottom: 1,
-                borderColor: 'divider',
-                bgcolor: 'background.paper',
-                px: 2,
-                display: 'flex',
-                justifyContent: 'center', // Centrar horizontalmente
-                '& .MuiTabs-indicator': {
-                  display: 'none', // Ocultar el indicador predeterminado
-                },
-              }}
-            >
-              <Tab
-                label="Inicio"
-                component={RouterLink}
-                to="/Inicio"
-                sx={{
-                  textTransform: 'none',
-                  fontWeight: 'bold',
-                  color: tab === 0 ? '#2E7D32' : '#1B5E20', // Color del texto
-                  bgcolor: tab === 0 ? '#E8F5E9' : 'transparent', // Fondo más claro para la pestaña activa
-                  borderRadius: 1,
-                  mx: 1,
-                  px: 3,
-                  py: 1,
-                  '&:hover': {
-                    bgcolor: '#F1F8E9',
-                    color: '#1B5E20',
-                  },
-                }}
-              />
-              <Tab
-                label="Mapa"
-                component={RouterLink}
-                to="/BikeMap"
-                sx={{
-                  textTransform: 'none',
-                  fontWeight: 'bold',
-                  color: tab === 1 ? '#2E7D32' : '#1B5E20',
-                  bgcolor: tab === 1 ? '#E8F5E9' : 'transparent',
-                  borderRadius: 1,
-                  mx: 1,
-                  px: 3,
-                  py: 1,
-                  '&:hover': {
-                    bgcolor: '#F1F8E9',
-                    color: '#1B5E20',
-                  },
-                }}
-              />
-              <Tab
-                label="Mis Reservas"
-                component={RouterLink}
-                to="/ReservationList"
-                sx={{
-                  textTransform: 'none',
-                  fontWeight: 'bold',
-                  color: tab === 2 ? '#2E7D32' : '#1B5E20',
-                  bgcolor: tab === 2 ? '#E8F5E9' : 'transparent',
-                  borderRadius: 1,
-                  mx: 1,
-                  px: 3,
-                  py: 1,
-                  '&:hover': {
-                    bgcolor: '#F1F8E9',
-                    color: '#1B5E20',
-                  },
-                }}
-              />
-              <Tab
-                label="Viajes Activos"
-                component={RouterLink}
-                to="/ActiveRides"
-                sx={{
-                  textTransform: 'none',
-                  fontWeight: 'bold',
-                  color: tab === 3 ? '#2E7D32' : '#1B5E20',
-                  bgcolor: tab === 3 ? '#E8F5E9' : 'transparent',
-                  borderRadius: 1,
-                  mx: 1,
-                  px: 3,
-                  py: 1,
-                  '&:hover': {
-                    bgcolor: '#F1F8E9',
-                    color: '#1B5E20',
-                  },
-                }}
-              />
-              <Tab
-                label="Mi Perfil"
-                component={RouterLink}
-                to="/Profile"
-                sx={{
-                  textTransform: 'none',
-                  fontWeight: 'bold',
-                  color: tab === 4 ? '#2E7D32' : '#1B5E20',
-                  bgcolor: tab === 4 ? '#E8F5E9' : 'transparent',
-                  borderRadius: 1,
-                  mx: 1,
-                  px: 3,
-                  py: 1,
-                  '&:hover': {
-                    bgcolor: '#F1F8E9',
-                    color: '#1B5E20',
-                  },
-                }}
-              />
-            </Tabs>
-          </Box>
-
           <Box sx={{
             flex: 1,
             display: 'flex',
             flexDirection: 'column',
             p: 3,
             bgcolor: 'background.default',
-            overflow: 'hidden'
+            overflow: 'auto'
           }}>
             <Routes>
-            <Route path="/Inicio" element={<Home />} />
+              <Route path="/Inicio" element={<Home />} />
               <Route path="/BikeMap" element={<BikeMap />} />
               <Route path="/ReservationList" element={<ReservationList />} />
               <Route path="/ActiveRides" element={<ActiveRides />} />
@@ -370,7 +310,7 @@ function App() {
               <Route path="/Profile" element={<Profile />} />
               <Route path="/user-profile" element={<UserProfile />} />
               <Route path="*" element={<Home />} />
-              </Routes>
+            </Routes>
           </Box>
         </Box>
       </Router>
